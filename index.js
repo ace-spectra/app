@@ -1379,11 +1379,13 @@ async function staffRoutes(req, res, url, user) {
         if (!can(staff, "apps.view")) return deny();
 
         const [departments] = await db.query(
-            "SELECT name FROM departments ORDER BY name"
+            "SELECT name FROM departments WHERE role_access IS NULL OR JSON_CONTAINS(role_access, JSON_QUOTE(?)) OR ? = 'Administrator' ORDER BY name",
+            [staff.role, staff.role]
         );
 
         const [positions] = await db.query(
-            "SELECT id, title FROM positions ORDER BY title"
+            "SELECT p.id, p.title FROM positions p LEFT JOIN departments d ON d.id = p.department_id WHERE d.role_access IS NULL OR JSON_CONTAINS(d.role_access, JSON_QUOTE(?)) OR ? = 'Administrator' ORDER BY p.title",
+            [staff.role, staff.role]
         );
 
         const [members] = await db.query(
@@ -1688,8 +1690,8 @@ async function staffRoutes(req, res, url, user) {
         if (title.length < 3) return sendError(res, 400, "Position title is too short.");
 
         const [departments] = await db.query(
-            "SELECT id, name FROM departments WHERE id = ?",
-            [Number(data.departmentId)]
+            "SELECT id, name FROM departments WHERE id = ? AND (role_access IS NULL OR JSON_CONTAINS(role_access, JSON_QUOTE(?)) OR ? = 'Administrator')",
+            [Number(data.departmentId), staff.role, staff.role]
         );
 
         if (!departments.length) return sendError(res, 400, "Choose a valid department.");
@@ -1772,6 +1774,12 @@ async function staffRoutes(req, res, url, user) {
             const requirements = Array.isArray(data.requirements)
                 ? data.requirements.map(item => safeString(item, 300)).filter(Boolean).slice(0, 30)
                 : [];
+
+            const [departmentAccess] = await db.query(
+                "SELECT id FROM departments WHERE id = ? AND (role_access IS NULL OR JSON_CONTAINS(role_access, JSON_QUOTE(?)) OR ? = 'Administrator')",
+                [Number(data.departmentId), staff.role, staff.role]
+            );
+            if (!departmentAccess.length) return sendError(res, 400, "Choose a department you are allowed to access.");
 
             await db.query(
                 `UPDATE positions SET
