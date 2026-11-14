@@ -1442,7 +1442,7 @@ async function staffRoutes(req, res, url, user) {
         const username = safeString(data.username, 80);
         const robloxUsername = safeString(data.robloxUsername, 20);
         const positionId = Number(data.positionId);
-        if (!/^\\d{17,20}$/.test(discordId) || !username) return sendError(res, 400, "Enter the applicant's Discord ID and username.");
+        if (!/^\d{17,20}$/.test(discordId) || !username) return sendError(res, 400, "Enter the applicant's Discord ID and username.");
         if (!Number.isInteger(positionId) || positionId < 1) return sendError(res, 400, "Choose a valid position.");
         const position = await getPosition(positionId);
         if (!position) return sendError(res, 404, "Position not found.");
