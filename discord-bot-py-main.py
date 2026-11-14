@@ -206,18 +206,18 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
         safe_title = discord.utils.escape_markdown(position_title)
         safe_reviewer = discord.utils.escape_markdown(reviewer_name)
         support_url = os.getenv("LUMO_SUPPORT_URL", "").strip()
-        support_line = f"\\n\\nQuestions or concerns? [Contact Us]({support_url})" if support_url else ""
+        support_line = f"\n\nQuestions or concerns? [Contact Us]({support_url})" if support_url else ""
 
         if event == "submitted":
             description = (
                 f"Dear {safe_name},"
-                f"\\n\\nThank you for taking the time to complete your application "
+                f"\n\nThank you for taking the time to complete your application "
                 f"for the role of **{safe_title}**. Your application has been received "
                 "and we are working hard behind the scenes for your result."
-                "\\n\\nWe appreciate your interest in our community and we wish you "
+                "\n\nWe appreciate your interest in our community and we wish you "
                 "luck for your result."
-                "\\n\\nKind Regards,"
-                "\\nThe Lumo Shopping Team"
+                "\n\nKind Regards,"
+                "\nThe Lumo Shopping Team"
             )
             embed = discord.Embed(
                 title="<:idcard:1539719123846823946> Application Status Update",
@@ -228,13 +228,13 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
         elif status == "Under review":
             description = (
                 f"Dear {safe_name},"
-                f"\\n\\nThank you for taking the time to complete your application "
+                f"\n\nThank you for taking the time to complete your application "
                 f"for the role of **{safe_title}**. Your application is currently being "
                 "reviewed by a member of our team."
-                "\\n\\nWe appreciate the time you have taken to apply for a position "
+                "\n\nWe appreciate the time you have taken to apply for a position "
                 "with us, please keep an eye on your DMs for further updates."
-                "\\n\\nKind Regards,"
-                "\\nThe Lumo Shopping Team"
+                "\n\nKind Regards,"
+                "\nThe Lumo Shopping Team"
             )
             embed = discord.Embed(
                 title="<:toggleon:1539719294546481354> Application Status Update",
@@ -245,15 +245,15 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
         elif status in {"Shortlisted", "Interview"}:
             description = (
                 f"Dear {safe_name},"
-                f"\\n\\nYour application for **{safe_title}** has been reviewed "
+                f"\n\nYour application for **{safe_title}** has been reviewed "
                 f"by **{safe_reviewer}**, a member of our team, and a decision has "
                 "been made. This message does not constitute a pass or a fail, "
                 "please read more below."
-                "\\n\\nYou will not receive your result until all applications "
+                "\n\nYou will not receive your result until all applications "
                 "have been reviewed so that everyone can receive their result at "
                 "the same time."
-                "\\n\\nKind Regards,"
-                "\\nThe Lumo Shopping Team"
+                "\n\nKind Regards,"
+                "\nThe Lumo Shopping Team"
             )
             embed = discord.Embed(
                 title="<:development:1517225139115135030> Application Status Update",
@@ -271,10 +271,10 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
             )
             description = (
                 f"Dear {safe_name},"
-                f"\\n\\nThere has been a final update to your application for **{safe_title}**."
-                f"\\n\\n{outcome}"
-                "\\n\\nKind Regards,"
-                "\\nThe Lumo Shopping Team"
+                f"\n\nThere has been a final update to your application for **{safe_title}**."
+                f"\n\n{outcome}"
+                "\n\nKind Regards,"
+                "\nThe Lumo Shopping Team"
             )
             embed = discord.Embed(
                 title="<:toggleon:1539719294546481354> Application Status Update",
