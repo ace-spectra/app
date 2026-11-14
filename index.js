@@ -1670,7 +1670,7 @@ async function staffRoutes(req, res, url, user) {
     }
 
     if (route === "/positions" && method === "GET") {
-        if (!can(staff, "positions.view")) return deny();
+        if (!can(staff, "positions.view") && !can(staff, "apps.review")) return deny();
 
         const [rows] = await db.query(
             `SELECT p.*, d.name AS department_name,
