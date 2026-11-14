@@ -814,6 +814,7 @@ function Review({ id, user, go, back }) {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const can = p => user.perms.includes(p);
   const canSet = s => can("apps.decide") || (can("apps.review") && (s === "Under review" || s === "Shortlisted"));
 
@@ -853,7 +854,6 @@ function Review({ id, user, go, back }) {
   }
 
   async function deleteApplication() {
-    if (!window.confirm("Delete this application permanently?")) return;
     const r = await call("/api/staff/applications/" + id + "/delete", "DELETE");
     if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
     back();
@@ -862,6 +862,10 @@ function Review({ id, user, go, back }) {
 
   return (
     <StaffPage title={a.username} sub={a.title + " • " + a.dept} view="applications" go={go} user={user} back={back} backText="Back to applications" badge={<Badge status={a.status} />}>
+      {confirmDelete && can("apps.review") && <div className="card gap">
+        <b>Delete this application permanently?</b>
+        <div className="row"><button className="btn red" onClick={deleteApplication}>Confirm delete</button><button className="btn plain" onClick={() => setConfirmDelete(false)}>Cancel</button></div>
+      </div>}
       {editing && can("apps.review") && <div className="card gap">
         <b>Edit application</b>
         <Field label="Applicant name"><input value={editForm.username} onChange={e => setEditForm({ ...editForm, username: e.target.value })} /></Field>
@@ -882,7 +886,7 @@ function Review({ id, user, go, back }) {
           <div>
             <div className="meta">Submitted {niceDateTime(a.date)}</div>
             <div className="meta">Reviewer: {a.assignee || "Nobody yet"}</div>
-            {can("apps.review") && <div className="row" style={{ marginTop: 8 }}><button className="btn small plain" onClick={() => { setEditForm({ username: a.username, robloxUsername: a.robloxUsername, answers: Object.fromEntries(data.answers.map(item => [item.id, item.answer])) }); setEditing(true); }}>Edit</button><button className="btn small red" onClick={deleteApplication}>Delete</button></div>}
+            {can("apps.review") && <div className="row" style={{ marginTop: 8 }}><button className="btn small plain" onClick={() => { setEditForm({ username: a.username, robloxUsername: a.robloxUsername, answers: Object.fromEntries(data.answers.map(item => [item.id, item.answer])) }); setEditing(true); }}>Edit</button><button className="btn small red" onClick={() => setConfirmDelete(true)}>Delete</button></div>}
           </div>
         </div>
         <hr className="rule" />
@@ -1127,6 +1131,7 @@ function Departments({ user, go }) {
   const [data, error, reload] = useLoad("/api/staff/departments");
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState("");
+  const [deleteId, setDeleteId] = useState(null);
   const manage = user.role === "Administrator";
   const roleOptions = ["Administrator", "Recruitment Manager", "Department Lead", "Reviewer"];
 
@@ -1140,10 +1145,10 @@ function Departments({ user, go }) {
   }
 
   async function removeDepartment(department) {
-    if (!window.confirm("Delete " + department.name + "? Its positions will become unassigned and its applications will be retained.")) return;
     const r = await call("/api/staff/departments/" + department.id, "DELETE");
     if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
     setMessage("");
+    setDeleteId(null);
     reload();
   }
 
@@ -1183,7 +1188,7 @@ function Departments({ user, go }) {
                   <td>{d.lead || <span className="meta">None</span>}</td>
                   <td>{d.staff.length === 0 ? <span className="meta">None</span> : d.staff.join(", ")}</td>
                   <td>{d.openPositions}</td><td>{d.applications}</td>
-                  {manage && <td><div className="row"><button className="btn small plain" onClick={() => setForm({ id: d.id, name: d.name, description: d.description, leadId: d.leadId || "", roleAccess: d.roleAccess || roleOptions })}>Edit</button><button className="btn small red" onClick={() => removeDepartment(d)}>Delete</button></div></td>}
+                  {manage && <td><div className="row"><button className="btn small plain" onClick={() => setForm({ id: d.id, name: d.name, description: d.description, leadId: d.leadId || "", roleAccess: d.roleAccess || roleOptions })}>Edit</button>{deleteId === d.id ? <><span className="meta">Delete this department?</span><button className="btn small red" onClick={() => removeDepartment(d)}>Confirm</button><button className="btn small plain" onClick={() => setDeleteId(null)}>Cancel</button></> : <button className="btn small red" onClick={() => setDeleteId(d.id)}>Delete</button>}</div></td>}
                 </tr>
               ))}</tbody>
             </table>
