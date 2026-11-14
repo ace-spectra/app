@@ -1505,12 +1505,19 @@ async function staffRoutes(req, res, url, user) {
             const answers = jsonValue(row.answers, {});
             const questions = jsonValue(row.question_snapshot, []);
             const screening = screen(answers, questions);
-            const answerList = questions.map(question => ({
-                id: question.id,
-                label: question.label,
-                category: question.category || "general",
-                answer: answers[String(question.id)] || ""
-            }));
+            const answerList = questions.length
+                ? questions.map(question => ({
+                    id: question.id,
+                    label: question.label,
+                    category: question.category || "general",
+                    answer: answers[String(question.id)] || ""
+                }))
+                : Object.entries(answers).map(([key, answer]) => ({
+                    id: key,
+                    label: key,
+                    category: "general",
+                    answer
+                }));
 
             const [events] = await db.query(
                 `SELECT e.*, s.username AS staff_username, s.avatar AS staff_avatar
@@ -1597,17 +1604,24 @@ async function staffRoutes(req, res, url, user) {
             if (!profile) return sendError(res, 400, "Roblox user not found.");
             const questions = jsonValue(row.question_snapshot, []);
             const answers = data.answers && typeof data.answers === "object" ? data.answers : jsonValue(row.answers, {});
-            for (const question of questions) {
-                if (!safeString(answers[String(question.id)], 2000)) return sendError(res, 400, "Please answer: " + question.label);
+            if (!questions.length) {
+                await db.query(
+                    "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ? WHERE id = ?",
+                    [encrypt(username), encrypt(profile.username), profile.id, profile.avatar, id]
+                );
+            } else {
+                for (const question of questions) {
+                    if (!safeString(answers[String(question.id)], 2000)) return sendError(res, 400, "Please answer: " + question.label);
+                }
+                const cleanAnswers = {};
+                for (const question of questions) cleanAnswers[String(question.id)] = safeString(answers[String(question.id)], 2000);
+                const screening = screen(cleanAnswers, questions);
+                await db.query(
+                    "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ?, answers = ?, score = ?, screening = ? WHERE id = ?",
+                    [encrypt(username), encrypt(profile.username), profile.id, profile.avatar,
+                        encrypt(JSON.stringify(cleanAnswers)), screening.score, encrypt(JSON.stringify(screening)), id]
+                );
             }
-            const cleanAnswers = {};
-            for (const question of questions) cleanAnswers[String(question.id)] = safeString(answers[String(question.id)], 2000);
-            const screening = screen(cleanAnswers, questions);
-            await db.query(
-                "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ?, answers = ?, score = ?, screening = ? WHERE id = ?",
-                [encrypt(username), encrypt(profile.username), profile.id, profile.avatar,
-                    encrypt(JSON.stringify(cleanAnswers)), screening.score, encrypt(JSON.stringify(screening)), id]
-            );
             await addEvent(id, staff.username, "history", "Application details edited", null, user);
             return sendJson(res, 200, { ok: true });
         }
