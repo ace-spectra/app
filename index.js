@@ -697,11 +697,43 @@ function applicationObject(row) {
     };
 }
 
+async function notifyApplicantDM(payload) {
+    const endpoint = String(process.env.BOT_NOTIFICATION_URL || "").trim();
+    const secret = String(process.env.BOT_NOTIFICATION_SECRET || "").trim();
+    if (!endpoint || !secret || !payload.discordId) return;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Lumo-Notification-Secret": secret
+            },
+            body: JSON.stringify({
+                discord_id: String(payload.discordId),
+                event: payload.event,
+                application_id: String(payload.applicationId || ""),
+                applicant_name: safeString(payload.applicantName, 80),
+                position_title: safeString(payload.positionTitle, 120),
+                department: safeString(payload.department, 80),
+                status: safeString(payload.status, 40),
+                previous_status: safeString(payload.previousStatus, 40)
+            }),
+            signal: AbortSignal.timeout(5000)
+        });
+        if (!response.ok) {
+            console.error("Applicant DM relay rejected notification:", response.status);
+        }
+    } catch (error) {
+        console.error("Applicant DM relay failed:", error.message);
+    }
+}
+
 async function setApplicationStatus(id, status, actor) {
     if (!STATUSES.includes(status)) return false;
 
     const [rows] = await db.query(
-        "SELECT username, status, assigned_to FROM applications WHERE id = ?",
+        "SELECT username, discord_enc, status, assigned_to, title, dept FROM applications WHERE id = ?",
         [id]
     );
 
@@ -715,6 +747,17 @@ async function setApplicationStatus(id, status, actor) {
     );
 
     const applicant = decrypt(rows[0].username);
+
+    await notifyApplicantDM({
+        discordId: decrypt(rows[0].discord_enc),
+        event: "status",
+        applicationId: id,
+        applicantName: applicant,
+        positionTitle: rows[0].title || "",
+        department: rows[0].dept || "",
+        previousStatus: rows[0].status,
+        status
+    });
 
     await addEvent(
         id,
@@ -919,6 +962,15 @@ async function submitApplication(req, res, user) {
     );
 
     await addEvent(id, user.username, "history", "Application submitted", null, user);
+    await notifyApplicantDM({
+        discordId: user.id,
+        event: "submitted",
+        applicationId: id,
+        applicantName: user.username,
+        positionTitle: position.title,
+        department: position.department_name || position.dept || "",
+        status: "Pending"
+    });
     await notifyManagers(
         `New application from ${user.username} for ${position.title}`,
         id,
