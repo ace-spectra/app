@@ -647,7 +647,7 @@ async function visibleApplication(id, staff) {
 
 async function getPosition(id) {
     const [rows] = await db.query(
-        "SELECT * FROM positions WHERE id = ?",
+        "SELECT p.*, d.name AS department_name FROM positions p LEFT JOIN departments d ON d.id = p.department_id WHERE p.id = ?",
         [id]
     );
     return rows[0] || null;
@@ -896,9 +896,9 @@ async function submitApplication(req, res, user) {
     await db.query(
         `INSERT INTO applications
         (id, discord_id, discord_enc, username, roblox_username, roblox_id, roblox_avatar,
-        job_id, position_id, title, dept, answers, score, screening,
+        job_id, position_id, title, dept, answers, question_snapshot, score, screening,
         status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', UTC_TIMESTAMP())`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', UTC_TIMESTAMP())`,
         [
             id,
             userHash,
@@ -912,6 +912,7 @@ async function submitApplication(req, res, user) {
             position.title,
             position.department_name || position.dept || "",
             encrypt(JSON.stringify(answers)),
+            encrypt(JSON.stringify(questions)),
             screening.score,
             encrypt(JSON.stringify(screening))
         ]
@@ -1826,7 +1827,9 @@ async function staffRoutes(req, res, url, user) {
             (SELECT COUNT(*) FROM applications a WHERE a.dept = d.name) AS application_count
             FROM departments d
             LEFT JOIN staff s ON s.discord_id = d.lead_id
-            ORDER BY d.name`
+            WHERE (? = 'Administrator' OR d.role_access IS NULL OR JSON_CONTAINS(d.role_access, JSON_QUOTE(?)))
+            ORDER BY d.name`,
+            [staff.role, staff.role]
         );
 
         const [members] = await db.query(
