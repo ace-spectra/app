@@ -1605,9 +1605,13 @@ async function staffRoutes(req, res, url, user) {
             const questions = jsonValue(row.question_snapshot, []);
             const answers = data.answers && typeof data.answers === "object" ? data.answers : jsonValue(row.answers, {});
             if (!questions.length) {
+                const legacyAnswers = {};
+                for (const [key, value] of Object.entries(answers)) {
+                    legacyAnswers[safeString(key, 100)] = safeString(value, 2000);
+                }
                 await db.query(
-                    "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ? WHERE id = ?",
-                    [encrypt(username), encrypt(profile.username), profile.id, profile.avatar, id]
+                    "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ?, answers = ? WHERE id = ?",
+                    [encrypt(username), encrypt(profile.username), profile.id, profile.avatar, encrypt(JSON.stringify(legacyAnswers)), id]
                 );
             } else {
                 for (const question of questions) {
