@@ -320,7 +320,7 @@ async def main():
 
             print("Slash commands synced.")
             print("Roblox API client started.")
-            print("Health API running on 127.0.0.1:3000")
+            print(f"Bot API listening on {os.getenv('BOT_API_HOST', '0.0.0.0')}:{os.getenv('BOT_API_PORT', '3000')}")
 
             await asyncio.gather(
                 discord_bot.connect(),
