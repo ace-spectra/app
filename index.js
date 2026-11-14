@@ -1433,7 +1433,44 @@ async function staffRoutes(req, res, url, user) {
         return sendJson(res, 200, { ok: true, updated, count: updated });
     }
 
-    const appMatch = route.match(/^\/applications\/([a-f0-9]+)(?:\/(status|assign|note|notes|rescore|summary))?$/i);
+    if (route === "/applications" && method === "POST") {
+        if (!can(staff, "apps.review")) return deny();
+        const data = await bodyJson(req);
+        if (!data) return sendError(res, 400, "Invalid request.");
+        const discordId = safeString(data.discordId, 20);
+        const username = safeString(data.username, 80);
+        const robloxUsername = safeString(data.robloxUsername, 20);
+        const positionId = Number(data.positionId);
+        if (!/^\\d{17,20}$/.test(discordId) || !username) return sendError(res, 400, "Enter the applicant's Discord ID and username.");
+        if (!Number.isInteger(positionId) || positionId < 1) return sendError(res, 400, "Choose a valid position.");
+        const position = await getPosition(positionId);
+        if (!position) return sendError(res, 404, "Position not found.");
+        const robloxProfile = await lookupRobloxUser(robloxUsername);
+        if (!robloxProfile) return sendError(res, 400, "Enter a valid Roblox username.");
+        const questions = jsonValue(position.questions, []);
+        const answers = {};
+        for (const question of questions) {
+            const answer = safeString((data.answers || {})[String(question.id)], 2000);
+            if (!answer) return sendError(res, 400, "Please answer: " + question.label);
+            answers[String(question.id)] = answer;
+        }
+        const id = crypto.randomBytes(6).toString("hex");
+        const screening = screen(answers, questions);
+        await db.query(
+            `INSERT INTO applications
+            (id, discord_id, discord_enc, username, roblox_username, roblox_id, roblox_avatar,
+            job_id, position_id, title, dept, answers, question_snapshot, score, screening, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', UTC_TIMESTAMP())`,
+            [id, blind(discordId), encrypt(discordId), encrypt(username), encrypt(robloxProfile.username),
+                robloxProfile.id, robloxProfile.avatar, positionId, positionId, position.title,
+                position.department_name || position.dept || "", encrypt(JSON.stringify(answers)),
+                encrypt(JSON.stringify(questions)), screening.score, encrypt(JSON.stringify(screening))]
+        );
+        await addEvent(id, staff.username, "history", "Application created by staff", null, user);
+        return sendJson(res, 201, { ok: true, id });
+    }
+
+    const appMatch = route.match(/^\/applications\/([a-f0-9]+)(?:\/(status|assign|note|notes|rescore|summary|edit|delete))?$/i);
 
     if (appMatch) {
         const id = appMatch[1];
@@ -1520,6 +1557,40 @@ async function staffRoutes(req, res, url, user) {
                     canAssign: can(staff, "apps.assign")
                 }
             });
+        }
+
+        if (method === "DELETE" && action === "delete") {
+            if (!can(staff, "apps.review")) return deny();
+            await db.query("DELETE FROM app_events WHERE app_id = ?", [id]);
+            await db.query("DELETE FROM notifications WHERE app_id = ?", [id]);
+            await db.query("DELETE FROM applications WHERE id = ?", [id]);
+            return sendJson(res, 200, { ok: true });
+        }
+
+        if (method === "PUT" && action === "edit") {
+            if (!can(staff, "apps.review")) return deny();
+            const data = await bodyJson(req);
+            if (!data) return sendError(res, 400, "Invalid request.");
+            const username = safeString(data.username, 80);
+            const robloxUsername = safeString(data.robloxUsername, 20);
+            if (!username || !/^[a-zA-Z0-9_]{3,20}$/.test(robloxUsername)) return sendError(res, 400, "Enter a valid applicant name and Roblox username.");
+            const profile = await lookupRobloxUser(robloxUsername);
+            if (!profile) return sendError(res, 400, "Roblox user not found.");
+            const questions = jsonValue(row.question_snapshot, []);
+            const answers = data.answers && typeof data.answers === "object" ? data.answers : jsonValue(row.answers, {});
+            for (const question of questions) {
+                if (!safeString(answers[String(question.id)], 2000)) return sendError(res, 400, "Please answer: " + question.label);
+            }
+            const cleanAnswers = {};
+            for (const question of questions) cleanAnswers[String(question.id)] = safeString(answers[String(question.id)], 2000);
+            const screening = screen(cleanAnswers, questions);
+            await db.query(
+                "UPDATE applications SET username = ?, roblox_username = ?, roblox_id = ?, roblox_avatar = ?, answers = ?, score = ?, screening = ? WHERE id = ?",
+                [encrypt(username), encrypt(profile.username), profile.id, profile.avatar,
+                    encrypt(JSON.stringify(cleanAnswers)), screening.score, encrypt(JSON.stringify(screening)), id]
+            );
+            await addEvent(id, staff.username, "history", "Application details edited", null, user);
+            return sendJson(res, 200, { ok: true });
         }
 
         if (method === "POST" && action) {
