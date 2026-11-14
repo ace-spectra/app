@@ -185,15 +185,12 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
     position_title = str(payload.get("position_title", "your application")).strip()[:120]
     department = str(payload.get("department", "")).strip()[:80]
     status = str(payload.get("status", "")).strip()[:40]
-    previous_status = str(payload.get("previous_status", "")).strip()[:40]
     reviewer_name = str(payload.get("reviewer_name", "a member of our team")).strip()[:80]
 
     if not discord_id.isdigit() or event not in {"submitted", "status"}:
         raise HTTPException(status_code=400, detail="Invalid notification payload")
-
     if not discord_bot.is_ready():
         raise HTTPException(status_code=503, detail="Discord bot is not ready")
-
     if event == "status" and not status:
         raise HTTPException(status_code=400, detail="Missing application status")
 
@@ -205,96 +202,96 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
         safe_name = discord.utils.escape_markdown(applicant_name)
         safe_title = discord.utils.escape_markdown(position_title)
         safe_reviewer = discord.utils.escape_markdown(reviewer_name)
+        safe_status = discord.utils.escape_markdown(status)
         support_url = os.getenv("LUMO_SUPPORT_URL", "").strip()
-        support_line = f"\n\nQuestions or concerns? [Contact Us]({support_url})" if support_url else ""
 
         if event == "submitted":
-            description = (
-                f"Dear {safe_name},"
-                f"\n\nThank you for taking the time to complete your application "
-                f"for the role of **{safe_title}**. Your application has been received "
-                "and we are working hard behind the scenes for your result."
-                "\n\nWe appreciate your interest in our community and we wish you "
-                "luck for your result."
-                "\n\nKind Regards,"
-                "\nThe Lumo Shopping Team"
+            color = discord.Color.from_rgb(55, 139, 255)
+            status_label = "APPLICATION RECEIVED"
+            intro = (
+                f"Hi {safe_name},\n\n"
+                f"Thanks for applying for **{safe_title}**. Your application has "
+                "been safely received by our recruitment team."
             )
-            embed = discord.Embed(
-                title="<:idcard:1539719123846823946> Application Status Update",
-                description=description + support_line,
-                color=discord.Color.from_rgb(22, 132, 255),
-                timestamp=datetime.now(timezone.utc)
+            next_step = (
+                "Our team will review your application and contact you here "
+                "when there is an update."
             )
         elif status == "Under review":
-            description = (
-                f"Dear {safe_name},"
-                f"\n\nThank you for taking the time to complete your application "
-                f"for the role of **{safe_title}**. Your application is currently being "
-                "reviewed by a member of our team."
-                "\n\nWe appreciate the time you have taken to apply for a position "
-                "with us, please keep an eye on your DMs for further updates."
-                "\n\nKind Regards,"
-                "\nThe Lumo Shopping Team"
+            color = discord.Color.from_rgb(245, 190, 75)
+            status_label = "UNDER REVIEW"
+            intro = (
+                f"Hi {safe_name},\n\n"
+                f"Your application for **{safe_title}** is now being reviewed "
+                "by our recruitment team."
             )
-            embed = discord.Embed(
-                title="<:toggleon:1539719294546481354> Application Status Update",
-                description=description + support_line,
-                color=discord.Color.from_rgb(255, 221, 85),
-                timestamp=datetime.now(timezone.utc)
+            next_step = (
+                "There's nothing else you need to do right now. Please keep "
+                "your Discord direct messages open for updates."
             )
         elif status in {"Shortlisted", "Interview"}:
-            description = (
-                f"Dear {safe_name},"
-                f"\n\nYour application for **{safe_title}** has been reviewed "
-                f"by **{safe_reviewer}**, a member of our team, and a decision has "
-                "been made. This message does not constitute a pass or a fail, "
-                "please read more below."
-                "\n\nYou will not receive your result until all applications "
-                "have been reviewed so that everyone can receive their result at "
-                "the same time."
-                "\n\nKind Regards,"
-                "\nThe Lumo Shopping Team"
+            color = discord.Color.from_rgb(145, 126, 245)
+            status_label = "REVIEW COMPLETED"
+            intro = (
+                f"Hi {safe_name},\n\n"
+                f"Our team has completed a review of your application for "
+                f"**{safe_title}**. It was reviewed by **{safe_reviewer}**."
             )
-            embed = discord.Embed(
-                title="<:development:1517225139115135030> Application Status Update",
-                description=description + support_line,
-                color=discord.Color.from_rgb(139, 128, 245),
-                timestamp=datetime.now(timezone.utc)
+            next_step = (
+                "This is not a pass or fail notification. Final results will "
+                "be shared with applicants once all applications have been reviewed."
             )
+        elif status == "Accepted":
+            color = discord.Color.from_rgb(67, 181, 129)
+            status_label = "APPLICATION ACCEPTED"
+            intro = (
+                f"Congratulations, {safe_name}! Your application for "
+                f"**{safe_title}** has been accepted."
+            )
+            next_step = "A member of our team will be in touch with any next steps."
+        elif status == "Rejected":
+            color = discord.Color.from_rgb(237, 66, 69)
+            status_label = "APPLICATION UPDATE"
+            intro = (
+                f"Hi {safe_name},\n\nThank you for your interest in "
+                f"**{safe_title}**. Unfortunately, your application has not "
+                "been successful this time."
+            )
+            next_step = "We appreciate the time you took to apply and encourage you to keep an eye on future opportunities."
         else:
-            outcome = (
-                "Congratulations! Your application has been accepted."
-                if status == "Accepted"
-                else "Unfortunately, your application has not been successful this time."
-                if status == "Rejected"
-                else f"Your application status has changed to **{discord.utils.escape_markdown(status)}**."
+            color = discord.Color.from_rgb(145, 126, 245)
+            status_label = "STATUS UPDATED"
+            intro = (
+                f"Hi {safe_name},\n\nThere's been an update to your "
+                f"application for **{safe_title}**."
             )
-            description = (
-                f"Dear {safe_name},"
-                f"\n\nThere has been a final update to your application for **{safe_title}**."
-                f"\n\n{outcome}"
-                "\n\nKind Regards,"
-                "\nThe Lumo Shopping Team"
-            )
-            embed = discord.Embed(
-                title="<:toggleon:1539719294546481354> Application Status Update",
-                description=description + support_line,
-                color=(
-                    discord.Color.from_rgb(67, 181, 129)
-                    if status == "Accepted"
-                    else discord.Color.from_rgb(237, 66, 69)
-                    if status == "Rejected"
-                    else discord.Color.from_rgb(139, 128, 245)
-                ),
-                timestamp=datetime.now(timezone.utc)
-            )
+            next_step = f"Your current application status is **{safe_status}**."
 
+        embed = discord.Embed(
+            title="Application Update",
+            description=f"{intro}\n\n{next_step}",
+            color=color,
+            timestamp=datetime.now(timezone.utc)
+        )
+        embed.set_author(name="LUMO SHOPPING  •  CAREERS")
+        embed.add_field(name="CURRENT STATUS", value=f"**{status_label}**", inline=True)
         if department:
-            embed.add_field(name="Department", value=department, inline=False)
+            embed.add_field(
+                name="DEPARTMENT",
+                value=discord.utils.escape_markdown(department),
+                inline=True
+            )
         if application_id:
-            embed.add_field(name="Application Reference", value=f"`{application_id}`", inline=False)
+            embed.add_field(name="REFERENCE", value=f"`{application_id}`", inline=True)
 
-        embed.set_footer(text="Lumo Shopping")
+        if support_url:
+            embed.add_field(
+                name="NEED HELP?",
+                value=f"[Contact the Lumo team]({support_url})",
+                inline=False
+            )
+
+        embed.set_footer(text="Lumo Shopping  •  Recruitment")
         await recipient.send(embed=embed)
         return {"ok": True, "sent": True}
 
@@ -303,7 +300,6 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
     except discord.HTTPException as error:
         print(f"Applicant DM failed for {discord_id}: {error}")
         raise HTTPException(status_code=502, detail="Discord could not deliver the DM")
-
 
 @app.get("/api/health")
 async def health():
