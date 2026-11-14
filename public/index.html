@@ -597,7 +597,11 @@ function Overview({ user, go, openReview }) {
               {data.activity.length === 0 && <p className="meta" style={{ marginTop: 10 }}>Nothing yet.</p>}
               {data.activity.map((a, i) => (
                 <div className="note" key={i} style={a.applicationId ? { cursor: "pointer" } : {}} onClick={() => a.applicationId && openReview(a.applicationId)}>
-                  <div className="meta">{niceDateTime(a.date)}</div>{a.text}
+                  <div className="person" style={{ marginBottom: 6 }}>
+                    {a.authorAvatar ? <img className="avatar" src={a.authorAvatar} alt="" /> : <span className="avatar"></span>}
+                    <div><b>{a.authorUsername || a.who || "Staff member"}</b><div className="meta">{niceDateTime(a.date)}</div></div>
+                  </div>
+                  {a.text}
                 </div>
               ))}
             </div>
@@ -841,7 +845,10 @@ function Review({ id, user, go, back }) {
             {data.notes.length === 0 && <p className="meta" style={{ marginTop: 10 }}>No notes yet.</p>}
             {data.notes.map((n, i) => (
               <div className="note" key={i}>
-                <div className="meta"><b>{n.who}</b> • {niceDateTime(n.date)}</div>
+                <div className="person" style={{ marginBottom: 6 }}>
+                  {n.authorAvatar ? <img className="avatar" src={n.authorAvatar} alt="" /> : <span className="avatar"></span>}
+                  <div><b>{n.authorUsername || n.who || "Staff member"}</b><div className="meta">{niceDateTime(n.date)}</div></div>
+                </div>
                 {n.text}
               </div>
             ))}
@@ -882,7 +889,15 @@ function Review({ id, user, go, back }) {
             <b>History</b>
             <ul className="timeline">
               {data.history.length === 0 && <li className="meta">Nothing yet.</li>}
-              {data.history.map((h, i) => <li key={i}><div className="meta">{niceDateTime(h.date)}</div>{h.text}</li>)}
+              {data.history.map((h, i) => (
+                <li key={i}>
+                  <div className="person" style={{ marginBottom: 4 }}>
+                    {h.authorAvatar ? <img className="avatar" src={h.authorAvatar} alt="" /> : <span className="avatar"></span>}
+                    <div><b>{h.authorUsername || h.who || "Staff member"}</b><div className="meta">{niceDateTime(h.date)}</div></div>
+                  </div>
+                  {h.text}
+                </li>
+              ))}
               <li><div className="meta">{niceDateTime(a.date)}</div>Application submitted</li>
             </ul>
           </div>
