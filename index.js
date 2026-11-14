@@ -1118,35 +1118,54 @@ async function applicantRoutes(req, res, url, user) {
         try {
             await connection.beginTransaction();
 
+            // Capture every application belonging to this Discord account before
+            // deleting it, so linked events and staff notifications are removed too.
             const [mine] = await connection.query(
                 "SELECT id FROM applications WHERE discord_id = ?",
                 [userHash]
             );
-
             const ids = mine.map(row => row.id);
 
+            // Remove events on the user's own applications and events authored
+            // by this user on somebody else's application (notes/review history).
             if (ids.length) {
                 await connection.query(
                     "DELETE FROM app_events WHERE app_id IN (?)",
                     [ids]
                 );
+                await connection.query(
+                    "DELETE FROM notifications WHERE app_id IN (?)",
+                    [ids]
+                );
             }
 
+            await connection.query(
+                "DELETE FROM app_events WHERE author_id = ?",
+                [userHash]
+            );
+
+            // Remove all application records and notifications addressed to the user.
             await connection.query(
                 "DELETE FROM applications WHERE discord_id = ?",
                 [userHash]
             );
-
             await connection.query(
                 "DELETE FROM notifications WHERE discord_id = ?",
                 [userHash]
             );
 
+            // Remove references to this account from remaining records.
             await connection.query(
                 "UPDATE applications SET assigned_to = NULL, assigned_name = NULL WHERE assigned_to = ?",
                 [userHash]
             );
+            await connection.query(
+                "UPDATE departments SET lead_id = NULL WHERE lead_id = ?",
+                [userHash]
+            );
 
+            // Remove the staff profile itself, including its encrypted identifiers,
+            // username, avatar, role, department and responsibilities.
             await connection.query(
                 "DELETE FROM staff WHERE discord_id = ?",
                 [userHash]
@@ -1154,6 +1173,7 @@ async function applicantRoutes(req, res, url, user) {
 
             await connection.commit();
 
+            // Invalidate every in-memory session for this Discord account.
             for (const [sessionId, session] of sessions) {
                 if (session.id === user.id) sessions.delete(sessionId);
             }
@@ -1161,7 +1181,7 @@ async function applicantRoutes(req, res, url, user) {
             return sendJson(
                 res,
                 200,
-                { deleted: ids.length },
+                { deleted: true, applications: ids.length },
                 { "Set-Cookie": cookie("lumo_session", "", 0) }
             );
         } catch (error) {
