@@ -169,6 +169,105 @@ async def ping(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed)
 
 
+@app.post("/api/notifications/application")
+async def application_notification(payload: dict, x_lumo_notification_secret: str = Header(default="")):
+    expected_secret = os.getenv("BOT_NOTIFICATION_SECRET", "").strip()
+    if not expected_secret or not hmac.compare_digest(
+        x_lumo_notification_secret,
+        expected_secret
+    ):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    discord_id = str(payload.get("discord_id", "")).strip()
+    event = str(payload.get("event", "")).strip().lower()
+    application_id = str(payload.get("application_id", "")).strip()
+    applicant_name = str(payload.get("applicant_name", "there")).strip()[:80]
+    position_title = str(payload.get("position_title", "your application")).strip()[:120]
+    department = str(payload.get("department", "")).strip()[:80]
+    status = str(payload.get("status", "")).strip()[:40]
+    previous_status = str(payload.get("previous_status", "")).strip()[:40]
+
+    if not discord_id.isdigit() or event not in {"submitted", "status"}:
+        raise HTTPException(status_code=400, detail="Invalid notification payload")
+
+    if not discord_bot.is_ready():
+        raise HTTPException(status_code=503, detail="Discord bot is not ready")
+
+    if event == "status" and not status:
+        raise HTTPException(status_code=400, detail="Missing application status")
+
+    try:
+        recipient = discord_bot.get_user(int(discord_id))
+        if recipient is None:
+            recipient = await discord_bot.fetch_user(int(discord_id))
+
+        if event == "submitted":
+            embed = discord.Embed(
+                title="<:idcard:1539719123846823946> Application Received",
+                description=(
+                    f"Hi **{discord.utils.escape_markdown(applicant_name)}**! "
+                    f"We've successfully received your application for "
+                    f"**{discord.utils.escape_markdown(position_title)}**."
+                    "\\n\\nOur team will review it and contact you when there is an update."
+                ),
+                color=discord.Color.from_rgb(43, 45, 49)
+            )
+            embed.add_field(name="Application", value=position_title or "Not specified", inline=False)
+            embed.add_field(name="Status", value="<:toggleoff:1539719276955435098> Pending", inline=True)
+        else:
+            status_emojis = {
+                "Pending": "<:idcard:1539719123846823946>",
+                "Under review": "<:toggleon:1539719294546481354>",
+                "Shortlisted": "<:toggleon:1539719294546481354>",
+                "Interview": "<:toggleon:1539719294546481354>",
+                "Accepted": "<:toggleon:1539719294546481354>",
+                "Rejected": "<:warning~1:1517225000262701117>"
+            }
+            embed = discord.Embed(
+                title="<:toggleon:1539719294546481354> Application Update",
+                description=(
+                    f"Hi **{discord.utils.escape_markdown(applicant_name)}**, "
+                    f"there's been an update to your application for "
+                    f"**{discord.utils.escape_markdown(position_title)}**."
+                ),
+                color=discord.Color.from_rgb(43, 45, 49)
+            )
+            if previous_status:
+                embed.add_field(name="Previous Status", value=previous_status, inline=True)
+            embed.add_field(
+                name="New Status",
+                value=f"{status_emojis.get(status, '<:idcard:1539719123846823946>')} {status}",
+                inline=True
+            )
+            if status == "Accepted":
+                embed.add_field(
+                    name="Next Steps",
+                    value="Congratulations! The Lumo team will be in touch with further information.",
+                    inline=False
+                )
+            elif status == "Rejected":
+                embed.add_field(
+                    name="Update",
+                    value="Thank you for taking the time to apply to Lumo Shopping. We appreciate your interest.",
+                    inline=False
+                )
+
+        if department:
+            embed.add_field(name="Department", value=department, inline=False)
+        if application_id:
+            embed.add_field(name="Application Reference", value=f"`{application_id}`", inline=False)
+
+        embed.set_footer(text="Lumo Shopping • Applications")
+        await recipient.send(embed=embed)
+        return {"ok": True, "sent": True}
+
+    except discord.Forbidden:
+        return {"ok": True, "sent": False, "reason": "User DMs are disabled or bot is blocked"}
+    except discord.HTTPException as error:
+        print(f"Applicant DM failed for {discord_id}: {error}")
+        raise HTTPException(status_code=502, detail="Discord could not deliver the DM")
+
+
 @app.get("/api/health")
 async def health():
     latency = get_latency()
