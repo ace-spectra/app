@@ -319,6 +319,7 @@ function JobPage({ job, user, back, submitted }) {
 
   useEffect(() => {
     const username = roblox.trim();
+    setRobloxBusy(false);
     setRobloxProfile(null);
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) { setRobloxLookup(""); return; }
     let active = true;
