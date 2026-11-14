@@ -2,6 +2,7 @@ import os
 import asyncio
 import time
 import math
+import hmac
 
 import aiohttp
 import uvicorn
@@ -10,7 +11,7 @@ import roblox
 
 from datetime import datetime, timezone
 from discord.ext import commands
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
@@ -207,8 +208,8 @@ async def main():
     server = uvicorn.Server(
         uvicorn.Config(
             app,
-            host="127.0.0.1",
-            port=3000
+            host=os.getenv("BOT_API_HOST", "0.0.0.0"),
+            port=int(os.getenv("BOT_API_PORT", "3000"))
         )
     )
 
