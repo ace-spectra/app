@@ -717,7 +717,8 @@ async function notifyApplicantDM(payload) {
                 position_title: safeString(payload.positionTitle, 120),
                 department: safeString(payload.department, 80),
                 status: safeString(payload.status, 40),
-                previous_status: safeString(payload.previousStatus, 40)
+                previous_status: safeString(payload.previousStatus, 40),
+                reviewer_name: safeString(payload.reviewerName, 80)
             }),
             signal: AbortSignal.timeout(5000)
         });
@@ -756,6 +757,7 @@ async function setApplicationStatus(id, status, actor) {
         positionTitle: rows[0].title || "",
         department: rows[0].dept || "",
         previousStatus: rows[0].status,
+        reviewerName: actor.username,
         status
     });
 
