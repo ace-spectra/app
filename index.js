@@ -230,7 +230,10 @@ function fullRole(staff) {
 }
 
 async function staffOf(user) {
-    if (!user || !user.isStaffRole) return null;
+    // Admin-managed staff entries are authoritative even when the member does not
+    // hold the configured Discord server role. Discord-managed entries are
+    // deactivated separately by registerStaff when that server role is missing.
+    if (!user) return null;
     const [rows] = await db.query(
         "SELECT discord_id, username, avatar, role, dept, responsibilities, joined_at FROM staff WHERE discord_id = ? AND active = 1",
         [blind(user.id)]
