@@ -91,7 +91,7 @@ async def ping(interaction: discord.Interaction):
     )
 
     api_status, roblox_status = await asyncio.gather(
-        check_api("http://127.0.0.1:3000/api/health"),
+        check_api(f"http://127.0.0.1:{os.getenv('BOT_API_PORT', '3000')}/api/health"),
         check_api("https://users.roblox.com/v1/users/1")
     )
 
