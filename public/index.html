@@ -663,6 +663,9 @@ function ApplicationList({ user, go, openReview }) {
   const [bulk, setBulk] = useState({ action: "status", value: allowed[0] || "" });
   const [message, setMessage] = useState("");
   const [lookups] = useLoad("/api/staff/lookups");
+  const [positions] = useLoad("/api/staff/positions");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ discordId: "", username: "", robloxUsername: "", positionId: "", answers: {} });
 
   function change(values) {
     setFilters(f => ({ ...f, page: 1, ...values }));
@@ -696,9 +699,32 @@ function ApplicationList({ user, go, openReview }) {
 
   const exportQuery = new URLSearchParams(Object.entries(filters).filter(([k, v]) => v !== "" && k !== "page")).toString();
   const canBulk = allowed.length > 0 || can("apps.assign");
+  const selectedPosition = positions && positions.positions.find(p => p.id === Number(createForm.positionId));
+
+  async function createApplication() {
+    const r = await call("/api/staff/applications", "POST", { ...createForm, positionId: Number(createForm.positionId) });
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    setCreateOpen(false);
+    setCreateForm({ discordId: "", username: "", robloxUsername: "", positionId: "", answers: {} });
+    setMessage("Application created.");
+    reload();
+  }
 
   return (
     <StaffPage title="Applications" sub="Search, filter and review everyone who has applied." view="applications" go={go} user={user}>
+      {can("apps.review") && <div className="gap">
+        {!createOpen ? <button className="btn" onClick={() => setCreateOpen(true)}>Create application</button> : <div className="card gap">
+          <b>Create an application</b>
+          <div className="grid2">
+            <Field label="Applicant Discord ID"><input value={createForm.discordId} onChange={e => setCreateForm({ ...createForm, discordId: e.target.value })} /></Field>
+            <Field label="Applicant name"><input value={createForm.username} onChange={e => setCreateForm({ ...createForm, username: e.target.value })} /></Field>
+            <Field label="Roblox username"><input value={createForm.robloxUsername} onChange={e => setCreateForm({ ...createForm, robloxUsername: e.target.value })} /></Field>
+            <Field label="Position"><select value={createForm.positionId} onChange={e => setCreateForm({ ...createForm, positionId: e.target.value, answers: {} })}><option value="">Choose a position</option>{positions && positions.positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select></Field>
+          </div>
+          {selectedPosition && selectedPosition.questions.map(q => <Field key={q.id} label={q.label}><textarea value={createForm.answers[q.id] || ""} onChange={e => setCreateForm({ ...createForm, answers: { ...createForm.answers, [q.id]: e.target.value } })} /></Field>)}
+          <div className="row"><button className="btn" onClick={createApplication}>Create</button><button className="btn plain" onClick={() => setCreateOpen(false)}>Cancel</button></div>
+        </div>}
+      </div>}
       <div className="card gap">
         <div className="row">
           <input className="grow" placeholder="Search by name, Roblox username, Discord ID or application ID..." value={searchText} onChange={e => setSearchText(e.target.value)} />
@@ -785,6 +811,8 @@ function Review({ id, user, go, back }) {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState(null);
   const can = p => user.perms.includes(p);
   const canSet = s => can("apps.decide") || (can("apps.review") && (s === "Under review" || s === "Shortlisted"));
 
@@ -814,10 +842,32 @@ function Review({ id, user, go, back }) {
 
   const a = data.application;
   const s = data.screening;
+
+  async function saveEdits() {
+    const r = await call("/api/staff/applications/" + id + "/edit", "PUT", editForm);
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    setEditing(false);
+    setMessage("");
+    reload();
+  }
+
+  async function deleteApplication() {
+    if (!window.confirm("Delete this application permanently?")) return;
+    const r = await call("/api/staff/applications/" + id + "/delete", "DELETE");
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    back();
+  }
   const age = a.robloxCreated ? Math.floor((Date.now() - new Date(a.robloxCreated).getTime()) / 86400000) : null;
 
   return (
     <StaffPage title={a.username} sub={a.title + " • " + a.dept} view="applications" go={go} user={user} back={back} backText="Back to applications" badge={<Badge status={a.status} />}>
+      {editing && can("apps.review") && <div className="card gap">
+        <b>Edit application</b>
+        <Field label="Applicant name"><input value={editForm.username} onChange={e => setEditForm({ ...editForm, username: e.target.value })} /></Field>
+        <Field label="Roblox username"><input value={editForm.robloxUsername} onChange={e => setEditForm({ ...editForm, robloxUsername: e.target.value })} /></Field>
+        {data.answers.map(item => <Field key={item.id} label={item.label}><textarea value={editForm.answers[item.id] || ""} onChange={e => setEditForm({ ...editForm, answers: { ...editForm.answers, [item.id]: e.target.value } })} /></Field>)}
+        <div className="row"><button className="btn" onClick={saveEdits}>Save changes</button><button className="btn plain" onClick={() => setEditing(false)}>Cancel</button></div>
+      </div>}
       <div className="card gap">
         <div className="row">
           <div className="person grow">
@@ -831,6 +881,7 @@ function Review({ id, user, go, back }) {
           <div>
             <div className="meta">Submitted {niceDateTime(a.date)}</div>
             <div className="meta">Reviewer: {a.assignee || "Nobody yet"}</div>
+            {can("apps.review") && <div className="row" style={{ marginTop: 8 }}><button className="btn small plain" onClick={() => { setEditForm({ username: a.username, robloxUsername: a.robloxUsername, answers: Object.fromEntries(data.answers.map(item => [item.id, item.answer])) }); setEditing(true); }}>Edit</button><button className="btn small red" onClick={deleteApplication}>Delete</button></div>}
           </div>
         </div>
         <hr className="rule" />
