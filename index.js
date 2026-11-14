@@ -1448,6 +1448,13 @@ async function staffRoutes(req, res, url, user) {
         if (!Number.isInteger(positionId) || positionId < 1) return sendError(res, 400, "Choose a valid position.");
         const position = await getPosition(positionId);
         if (!position) return sendError(res, 404, "Position not found.");
+        if (staff.role !== "Administrator" && position.department_id) {
+            const [allowedDepartments] = await db.query(
+                "SELECT id FROM departments WHERE id = ? AND (role_access IS NULL OR JSON_CONTAINS(role_access, JSON_QUOTE(?)))",
+                [position.department_id, staff.role]
+            );
+            if (!allowedDepartments.length) return deny();
+        }
         const robloxProfile = await lookupRobloxUser(robloxUsername);
         if (!robloxProfile) return sendError(res, 400, "Enter a valid Roblox username.");
         const questions = jsonValue(position.questions, []);
@@ -1484,6 +1491,15 @@ async function staffRoutes(req, res, url, user) {
 
         if (method === "GET" && !action) {
             if (!can(staff, "apps.view")) return deny();
+
+            if (!row.roblox_id && decrypt(row.roblox_username)) {
+                const profile = await lookupRobloxUser(decrypt(row.roblox_username));
+                if (profile) {
+                    await db.query("UPDATE applications SET roblox_id = ?, roblox_avatar = ? WHERE id = ?", [profile.id, profile.avatar, id]);
+                    row.roblox_id = profile.id;
+                    row.roblox_avatar = profile.avatar;
+                }
+            }
 
             const application = applicationObject(row);
             const answers = jsonValue(row.answers, {});
