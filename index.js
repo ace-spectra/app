@@ -783,6 +783,37 @@ async function assignApplication(id, memberId, actor) {
     return true;
 }
 
+async function lookupRobloxUser(username) {
+    const clean = safeString(username, 20);
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(clean)) return null;
+    try {
+        const response = await fetch("https://users.roblox.com/v1/usernames/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usernames: [clean], excludeBannedUsers: false }),
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const user = Array.isArray(payload.data) ? payload.data[0] : null;
+        if (!user || !user.id) return null;
+        const thumbResponse = await fetch(
+            "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" +
+            encodeURIComponent(user.id) + "&size=150x150&format=Png&isCircular=true",
+            { signal: AbortSignal.timeout(8000) }
+        );
+        const thumbs = thumbResponse.ok ? await thumbResponse.json() : null;
+        return {
+            id: String(user.id),
+            username: user.name || clean,
+            displayName: user.displayName || user.name || clean,
+            avatar: thumbs && thumbs.data && thumbs.data[0] ? thumbs.data[0].imageUrl || "" : ""
+        };
+    } catch {
+        return null;
+    }
+}
+
 async function submitApplication(req, res, user) {
     const data = await bodyJson(req);
 
@@ -793,6 +824,8 @@ async function submitApplication(req, res, user) {
     const positionId = Number(data.positionId || data.jobId);
     const robloxUsername = safeString(data.robloxUsername, 20);
     const submittedAnswers = data.answers;
+    const robloxProfile = await lookupRobloxUser(robloxUsername);
+    if (!robloxProfile) return sendError(res, 400, "We couldn't find that Roblox username. Check it and try again.");
 
     if (!Number.isInteger(positionId) || positionId < 1) {
         return sendError(res, 400, "Please select a valid position.");
@@ -854,16 +887,18 @@ async function submitApplication(req, res, user) {
 
     await db.query(
         `INSERT INTO applications
-        (id, discord_id, discord_enc, username, roblox_username,
+        (id, discord_id, discord_enc, username, roblox_username, roblox_id, roblox_avatar,
         job_id, position_id, title, dept, answers, score, screening,
         status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', UTC_TIMESTAMP())`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', UTC_TIMESTAMP())`,
         [
             id,
             userHash,
             encrypt(user.id),
             encrypt(user.username),
             encrypt(robloxUsername),
+            String(robloxProfile.id),
+            robloxProfile.avatar,
             positionId,
             positionId,
             position.title,
@@ -923,6 +958,14 @@ async function applicantRoutes(req, res, url, user) {
         return sendJson(res, 200, {
             positions: rows.map(row => positionObject(row))
         });
+    }
+
+    if (route === "POST /api/roblox/lookup") {
+        const data = await bodyJson(req);
+        const username = safeString(data && data.username, 20);
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return sendError(res, 400, "Enter a valid Roblox username.");
+        const profile = await lookupRobloxUser(username);
+        return profile ? sendJson(res, 200, profile) : sendError(res, 404, "Roblox user not found.");
     }
 
     if (route === "POST /api/apply") {
@@ -1441,8 +1484,8 @@ async function staffRoutes(req, res, url, user) {
                 application: {
                     ...application,
                     robloxUsername: decrypt(row.roblox_username),
-                    robloxId: "",
-                    robloxAvatar: "",
+                    robloxId: row.roblox_id || "",
+                    robloxAvatar: row.roblox_avatar || "",
                     assignedTo: row.assigned_to,
                     assignee: row.assigned_name ? decrypt(row.assigned_name) : null
                 },
@@ -1725,6 +1768,7 @@ async function staffRoutes(req, res, url, user) {
                 id: Number(row.id),
                 name: row.name,
                 description: row.description || "",
+                roleAccess: (() => { try { return JSON.parse(row.role_access || "null") || ROLES; } catch { return ROLES; } })(),
                 lead: row.lead_username ? decrypt(row.lead_username) : null,
                 leadId: row.lead_id,
                 staff: staffRows.map(member => decrypt(member.username)),
@@ -1737,7 +1781,7 @@ async function staffRoutes(req, res, url, user) {
     }
 
     if (route === "/departments" && method === "POST") {
-        if (!can(staff, "departments.manage")) return deny();
+        if (staff.role !== "Administrator") return deny();
 
         const data = await bodyJson(req);
         if (!data) return sendError(res, 400, "Invalid request.");
@@ -1772,8 +1816,21 @@ async function staffRoutes(req, res, url, user) {
 
     const departmentMatch = route.match(/^\/departments\/(\d+)$/);
 
+    if (departmentMatch && method === "DELETE") {
+        if (staff.role !== "Administrator") return deny();
+        const id = Number(departmentMatch[1]);
+        const [[department]] = await db.query("SELECT name FROM departments WHERE id = ?", [id]);
+        if (!department) return sendError(res, 404, "Department not found.");
+        await db.query("UPDATE positions SET department_id = NULL WHERE department_id = ?", [id]);
+        await db.query("UPDATE applications SET dept = 'Unassigned' WHERE dept = ?", [department.name]);
+        await db.query("UPDATE staff SET dept = NULL, role = 'Reviewer' WHERE dept = ? AND role = 'Department Lead'", [department.name]);
+        await db.query("UPDATE departments SET lead_id = NULL WHERE id = ?", [id]);
+        await db.query("DELETE FROM departments WHERE id = ?", [id]);
+        return sendJson(res, 200, { ok: true });
+    }
+
     if (departmentMatch && method === "PUT") {
-        if (!can(staff, "departments.manage")) return deny();
+        if (staff.role !== "Administrator") return deny();
 
         const data = await bodyJson(req);
         if (!data) return sendError(res, 400, "Invalid request.");
@@ -1791,10 +1848,12 @@ async function staffRoutes(req, res, url, user) {
         if (!existing.length) return sendError(res, 404, "Department not found.");
 
         const oldName = existing[0].name;
-
+        const roleAccess = Array.isArray(data.roleAccess)
+            ? ROLES.filter(role => role === "Administrator" || data.roleAccess.includes(role))
+            : ROLES;
         await db.query(
-            "UPDATE departments SET name = ?, description = ? WHERE id = ?",
-            [name, safeString(data.description, 300), id]
+            "UPDATE departments SET name = ?, description = ?, role_access = ? WHERE id = ?",
+            [name, safeString(data.description, 300), JSON.stringify(roleAccess), id]
         );
 
         if (oldName !== name) {
@@ -2130,6 +2189,7 @@ async function setupDatabase() {
             name VARCHAR(50) NOT NULL UNIQUE,
             description VARCHAR(300) NOT NULL DEFAULT '',
             lead_id VARCHAR(64) NULL,
+            role_access TEXT NULL,
             created_at DATETIME NOT NULL
         )
     `);
@@ -2226,7 +2286,10 @@ async function setupDatabase() {
     const migrations = [
         ["applications", "discord_enc", "TEXT NULL"],
         ["applications", "roblox_username", "TEXT NULL"],
+        ["applications", "roblox_id", "VARCHAR(32) NULL"],
+        ["applications", "roblox_avatar", "TEXT NULL"],
         ["applications", "position_id", "INT NULL"],
+        ["departments", "role_access", "TEXT NULL"],
         ["applications", "question_snapshot", "MEDIUMTEXT NULL"],
         ["applications", "screening", "MEDIUMTEXT NULL"],
         ["applications", "score", "INT NULL"],
