@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#153820">
+<title>Lumo Careers</title>
+<link rel="icon" href="lumo_logos-7.png">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1f4d2b;
+    --deep:   #153820;
+    --leaf:   #3f8f55;
+    --mint:   #dcebdc;
+    --bg:     #f2f6f1;
+    --card:   #ffffff;
+    --ink:    #12241a;
+    --muted:  #5d7064;
+    --line:   #d5e0d6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Bricolage Grotesque", system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+  header { position: sticky; top: 0; z-index: 5; background: var(--deep); color: #fff; display: flex; align-items: center; gap: 16px; padding: 10px 32px; }
+  header > img { width: 36px; height: 36px; border-radius: 50%; }
+  .brand { font-weight: 800; font-size: 19px; margin-right: 12px; }
+  nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+  .tab { background: none; border: 0; color: #b9d3be; padding: 8px 14px; border-radius: 8px; }
+  .tab:hover { color: #fff; }
+  .tab.on { background: var(--forest); color: #fff; }
+  a.tab { display: inline-block; }
+  .tab.login { background: var(--forest); color: #fff; margin-left: auto; }
+  .tab.login:hover { background: var(--leaf); }
+  .user { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .userlink { display: flex; align-items: center; gap: 10px; background: none; border: 0; color: #fff; padding: 4px 12px 4px 4px; border-radius: 99px; }
+  .userlink:hover, .userlink.on { background: var(--forest); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--mint); object-fit: cover; }
+  .logout { color: #b9d3be; font-size: 14px; }
+  .logout:hover { color: #fff; }
+  .discord { display: inline-block; background: #5865f2; color: #fff; padding: 9px 16px; border-radius: 10px; font-weight: 600; }
+  .discord:hover { background: #4752c4; }
+  .notice { background: var(--mint); color: var(--forest); padding: 12px 32px; font-weight: 600; }
+
+  .banner { color: #fff; padding: 52px 24px 64px;
+            background: linear-gradient(rgba(21,56,32,.45), rgba(21,56,32,.85)), url("lumo_logos.png") center / cover; }
+  .banner.big { padding: 110px 24px 120px; }
+  .banner .inner, main { max-width: 1000px; margin: 0 auto; }
+  .banner h1 { font-size: 38px; font-weight: 800; }
+  .banner.big h1 { font-size: 56px; }
+  .banner p { color: #d3e6d6; margin-top: 8px; max-width: 460px; }
+  main { padding: 0 24px 60px; }
+  main > .lift { margin-top: -32px; }
+  .wide .inner, .wide main { max-width: 1180px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; }
+  .gap { margin-bottom: 16px; }
+  .meta { color: var(--muted); font-size: 14px; }
+  input, textarea, select { font: inherit; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; width: 100%; max-width: 100%; }
+  select { width: auto; }
+  input[type=checkbox] { width: auto; }
+  textarea { min-height: 90px; resize: vertical; }
+  textarea:focus, input:focus, select:focus { border-color: var(--leaf); }
+
+  .chip { border: 1px solid var(--line); background: #fff; padding: 6px 14px; border-radius: 99px; }
+  .chip.on { background: var(--forest); border-color: var(--forest); color: #fff; }
+
+  .btn { background: var(--leaf); color: #fff; border: 0; padding: 10px 18px; border-radius: 10px; font-weight: 600; display: inline-block; }
+  .btn:hover { background: var(--forest); }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn.red { background: #fff; color: #a33a3a; border: 1px solid #e3c4c4; }
+  .btn.plain { background: #fff; color: var(--forest); border: 1px solid var(--line); }
+  .btn.small { padding: 6px 12px; font-size: 14px; }
+  .back { background: none; border: 0; color: #cfe3d2; font-weight: 600; padding: 0; margin: 0 0 16px; }
+  .back:hover { color: #fff; }
+
+  .job { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .job h3 { font-size: 20px; }
+
+  .wrap { overflow-x: auto; padding: 8px 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 14px; color: var(--muted); font-weight: 600; padding: 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  td { padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  tr.click { cursor: pointer; }
+  tr.click:hover { background: var(--bg); }
+  .person { display: flex; align-items: center; gap: 10px; }
+
+  .badge { padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 600; white-space: nowrap; display: inline-block; }
+  .Accepted, .Published { background: #d4efd9; color: #17602b; }
+  .Rejected, .Closed    { background: #f6dada; color: #8e2c2c; }
+  .Shortlisted { background: #d6e8f7; color: #1d5a8c; }
+  .Pending     { background: #e6ecd0; color: #55661a; }
+  .Under-review { background: #fdf0cf; color: #7a5a08; }
+  .Interview   { background: #ead9f5; color: #67318f; }
+  .Draft       { background: #ececec; color: #555; }
+  .Staff       { background: var(--mint); color: var(--forest); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .stat b { font-size: 34px; display: block; }
+  .two { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
+  .even { grid-template-columns: 1fr 1fr; }
+  .stack > * + * { margin-top: 16px; }
+  .line { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 6px; gap: 12px; }
+  .bar { height: 10px; background: var(--mint); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--leaf); }
+  .note { background: var(--bg); border-radius: 10px; padding: 12px; margin-top: 10px; white-space: pre-wrap; }
+  .note .meta { margin-bottom: 4px; }
+  .flag { color: #8a5a00; background: #fdf3d8; border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: 14px; }
+  .ok { color: #17602b; background: #e8f5ea; border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: 14px; }
+  .big-score { font-size: 44px; font-weight: 800; line-height: 1; }
+  .timeline { list-style: none; padding: 0; margin-top: 8px; }
+  .timeline li { padding: 8px 0 8px 14px; border-left: 3px solid var(--mint); }
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 150px; margin-top: 12px; }
+  .chart i { flex: 1; background: var(--leaf); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .unread { border-left: 4px solid var(--leaf); }
+  .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+  .filters select, .filters input { width: 100%; }
+  .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 12px; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .qrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: grid; gap: 8px; }
+  .facts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .facts2 b { display: block; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+  .jobpage { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .jobpage h2 { font-size: 22px; margin: 22px 0 8px; }
+  .jobpage ul { padding-left: 20px; line-height: 1.7; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 6px; }
+  .facts b { display: block; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .apply { border-top: 6px solid var(--leaf); }
+  .apply h2 { margin-top: 0; }
+  .rule { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+  .account { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+  .account .avatar { width: 56px; height: 56px; }
+  .account.big .avatar { width: 72px; height: 72px; }
+  .account.big .name { font-size: 22px; font-weight: 800; }
+  .q { margin-bottom: 18px; }
+  .q label, label.f { font-weight: 600; display: block; margin-bottom: 6px; }
+  .error { color: #a33a3a; font-weight: 600; margin-bottom: 12px; }
+  .danger { border-color: #e3c4c4; }
+  .danger input { margin: 8px 0 14px; max-width: 280px; }
+  .danger label { font-weight: 600; }
+  .datalist { padding-left: 20px; line-height: 1.8; margin: 10px 0 16px; }
+
+  @media (max-width: 760px) {
+    .two, .jobpage, .grid2 { grid-template-columns: 1fr; }
+    header { padding: 10px 16px; flex-wrap: wrap; }
+    .notice { padding: 12px 16px; }
+    .banner.big h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const STATUSES = ["Pending", "Under review", "Shortlisted", "Interview", "Accepted", "Rejected"];
+const STATUS_LABEL = { Pending: "Awaiting review" };
+const CATEGORY_LABELS = { experience: "Experience", communication: "Communication", judgement: "Situational judgement", general: "General" };
+const ACTIONS = [
+  ["Under review", "Start review", "btn plain"],
+  ["Shortlisted", "Shortlist", "btn plain"],
+  ["Interview", "Move to interview", "btn plain"],
+  ["Accepted", "Accept application", "btn"],
+  ["Rejected", "Reject application", "btn red"],
+  ["Pending", "Reset to awaiting", "btn plain"],
+];
+
+async function call(path, method, body) {
+  try {
+    const response = await fetch(path, {
+      method: method || "GET",
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await response.json().catch(() => ({}));
+    return { ok: response.ok, data: data };
+  } catch (e) {
+    return { ok: false, data: { error: "Couldn't reach the server." } };
+  }
+}
+
+function useLoad(path) {
+  const [state, setState] = useState({ data: null, error: "" });
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let live = true;
+    call(path).then(r => {
+      if (live) setState(r.ok ? { data: r.data, error: "" } : { data: null, error: r.data.error || "Something went wrong." });
+    });
+    return () => { live = false; };
+  }, [path, tick]);
+  return [state.data, state.error, () => setTick(t => t + 1)];
+}
+
+function niceDate(iso) {
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+function niceDateTime(iso) {
+  return new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function Badge({ status }) {
+  return <span className={"badge " + status.replace(/ /g, "-")}>{status}</span>;
+}
+function Bar({ value, max }) {
+  return <div className="bar"><i style={{ width: (max > 0 ? Math.min(value / max, 1) * 100 : 0) + "%" }}></i></div>;
+}
+function Field({ label, children }) {
+  return <div className="q"><label className="f">{label}</label>{children}</div>;
+}
+
+function Page({ title, sub, big, wide, back, backText, badge, children }) {
+  return (
+    <div className={wide ? "wide" : ""}>
+      <div className={"banner " + (big ? "big" : "")}>
+        <div className="inner">
+          {back && <button className="back" onClick={back}>← {backText}</button>}
+          <div className="row">
+            <h1 className="grow">{title}</h1>
+            {badge}
+          </div>
+          {sub && <p>{sub}</p>}
+        </div>
+      </div>
+      <main>{children}</main>
+    </div>
+  );
+}
+
+function Table({ columns, rows, onRowClick }) {
+  return (
+    <div className="card wrap lift">
+      <table>
+        <thead><tr>{columns.map(c => <th key={c}>{c}</th>)}</tr></thead>
+        <tbody>
+          {rows.map(r => (
+            <tr className="click" key={r.id} onClick={() => onRowClick(r.item)}>
+              {r.cells.map((cell, i) => <td key={i}>{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ============================================================
+   APPLICANT PAGES
+   ============================================================ */
+function Careers({ open }) {
+  const [data, error] = useLoad("/api/positions");
+  const [search, setSearch] = useState("");
+  const [dept, setDept] = useState("All");
+
+  const list = data ? data.positions : [];
+  const departments = ["All", ...new Set(list.map(p => p.dept))];
+  const shown = list.filter(p => p.title.toLowerCase().includes(search.toLowerCase()) && (dept === "All" || p.dept === dept));
+
+  return (
+    <Page big title="Work with us" sub="Join the team behind Lumo Shopping and help build something great.">
+      <div className="card gap lift">
+        <input placeholder="Search positions..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="row" style={{ marginTop: 14 }}>
+          {departments.map(d => (
+            <button key={d} className={"chip " + (dept === d ? "on" : "")} onClick={() => setDept(d)}>{d}</button>
+          ))}
+        </div>
+      </div>
+
+      {error && <div className="card error">{error}</div>}
+      {!data && !error && <div className="card">Loading positions...</div>}
+      {data && shown.length === 0 && <div className="card">No positions are open right now. Check back soon.</div>}
+      {shown.map(p => (
+        <div className="card job" key={p.id}>
+          <div>
+            <h3>{p.title}</h3>
+            <div className="meta">{p.dept} • {p.type} • Posted {niceDate(p.posted)}{p.closesAt ? " • Closes " + niceDate(p.closesAt) : ""}</div>
+            <p style={{ marginTop: 8 }}>{p.blurb}</p>
+          </div>
+          <button className="btn" onClick={() => open(p)}>View and apply</button>
+        </div>
+      ))}
+    </Page>
+  );
+}
+
+function readDraft(key) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key));
+    if (saved) return { answers: {}, roblox: "", savedAt: null, ...saved };
+  } catch (e) {}
+  return { answers: {}, roblox: "", savedAt: null };
+}
+
+function JobPage({ job, user, back, submitted }) {
+  const draftKey = "lumo-draft-" + (user ? user.id : "guest") + "-" + job.id;
+  const [answers, setAnswers] = useState(() => readDraft(draftKey).answers);
+  const [roblox, setRoblox] = useState(() => readDraft(draftKey).roblox);
+  const [savedAt, setSavedAt] = useState(() => readDraft(draftKey).savedAt);
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const done = job.questions.filter(q => (answers[q.id] || "").trim()).length;
+
+  function saveDraft() {
+    const now = new Date().toISOString();
+    try { localStorage.setItem(draftKey, JSON.stringify({ answers: answers, roblox: roblox, savedAt: now })); } catch (e) {}
+    setSavedAt(now);
+  }
+
+  async function submit() {
+    if (!roblox.trim()) { setError("Please enter your Roblox username."); return; }
+    if (job.questions.some(q => !(answers[q.id] || "").trim())) { setError("Please answer every question before submitting."); return; }
+
+    setSending(true);
+    setError("");
+    const r = await call("/api/apply", "POST", { positionId: job.id, robloxUsername: roblox.trim(), answers: answers });
+    if (!r.ok) { setError(r.data.error || "Something went wrong."); setSending(false); return; }
+    try { localStorage.removeItem(draftKey); } catch (e) {}
+    submitted();
+  }
+
+  return (
+    <Page title={job.title} sub={job.blurb} back={back} backText="Back to careers">
+      <div className="jobpage lift">
+        <div className="card">
+          <div className="facts">
+            <div><b>Department</b>{job.dept}</div>
+            <div><b>Hours</b>{job.type}</div>
+            <div><b>Posted</b>{niceDate(job.posted)}</div>
+            <div><b>Closes</b>{job.closesAt ? niceDate(job.closesAt) : "When filled"}</div>
+          </div>
+          <h2>About the role</h2>
+          <p style={{ lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{job.about}</p>
+          {job.requirements.length > 0 && <div><h2>Requirements</h2><ul>{job.requirements.map(r => <li key={r}>{r}</li>)}</ul></div>}
+        </div>
+
+        <div className="card apply">
+          <h2>Apply for this position</h2>
+          <p className="meta">Join our team and make an impact on the community.</p>
+
+          {!user && (
+            <div>
+              <hr className="rule" />
+              <p style={{ marginBottom: 14 }}>Log in with Discord to apply. We use it to know who you are and to track your application.</p>
+              <a className="discord" href="/auth/discord">Log in with Discord</a>
+            </div>
+          )}
+
+          {user && (
+            <div>
+              <p className="meta" style={{ marginTop: 6 }}>
+                {savedAt ? "Last saved: " + niceDateTime(savedAt) : "Last saved: Never"}
+                {" • "}{done} of {job.questions.length} answered
+              </p>
+              <hr className="rule" />
+              <b>Linked Discord account</b>
+              <div className="account">
+                <img className="avatar" src={user.avatar} alt="" />
+                <div>
+                  <div style={{ fontWeight: 600 }}>{user.username}</div>
+                  <div className="meta">Discord ID: {user.id}</div>
+                </div>
+              </div>
+              <hr className="rule" />
+
+              <div className="q">
+                <label htmlFor="roblox">Your Roblox username</label>
+                <input id="roblox" maxLength={20} value={roblox} onChange={e => setRoblox(e.target.value)} autoComplete="off" />
+              </div>
+
+              {job.questions.map(q => (
+                <div className="q" key={q.id}>
+                  <label htmlFor={"q-" + q.id}>{q.label}</label>
+                  <textarea id={"q-" + q.id} maxLength={2000} value={answers[q.id] || ""}
+                    onChange={e => setAnswers({ ...answers, [q.id]: e.target.value })} />
+                </div>
+              ))}
+
+              {error && <p className="error">{error}</p>}
+              <div className="row">
+                <button className="btn" onClick={submit} disabled={sending}>{sending ? "Submitting..." : "Submit application"}</button>
+                <button className="btn plain" onClick={saveDraft}>Save draft</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Page>
+  );
+}
+
+function MyApplications({ open, goCareers }) {
+  const [data] = useLoad("/api/my-applications");
+  const apps = data ? data.applications : null;
+  const rows = (apps || []).map(a => ({ id: a.id, item: a, cells: [a.title, a.dept, <Badge status={a.status} />, niceDate(a.date)] }));
+
+  return (
+    <Page title="My applications" sub="Track where each application is up to.">
+      {apps === null && <div className="card lift">Loading...</div>}
+      {apps !== null && apps.length === 0 && (
+        <div className="card lift">
+          <b>You haven't applied for anything yet.</b>
+          <p className="meta" style={{ margin: "6px 0 14px" }}>Your applications will show up here once you submit one.</p>
+          <button className="btn" onClick={goCareers}>View open positions</button>
+        </div>
+      )}
+      {apps !== null && apps.length > 0 && (
+        <Table columns={["Position", "Department", "Status", "Applied"]} rows={rows} onRowClick={open} />
+      )}
+    </Page>
+  );
+}
+
+function MyApplicationDetail({ app, back }) {
+  const messages = {
+    Accepted: ["You're in! Welcome to the team.", "You'll get further instructions on Discord shortly.", "#e8f5ea"],
+    Rejected: ["Thanks for applying.", "You weren't successful this time. You can apply again in 30 days.", "#fbeeee"],
+    Shortlisted: ["You've been shortlisted.", "We liked your application. Check back for the next step.", "#e8f1fa"],
+    Interview: ["We'd like to interview you.", "Keep an eye on your Discord messages for details.", "#f2e9f9"],
+  };
+  const [title, text, color] = messages[app.status] || ["We're reviewing your application.", "Check back here for updates.", "#f3f6e6"];
+
+  return (
+    <Page title={app.title} sub={"Applied on " + niceDate(app.date)} badge={<Badge status={app.status} />} back={back} backText="Back to my applications">
+      <div className="card gap lift" style={{ background: color }}>
+        <b>{title}</b>
+        <p className="meta">{text}</p>
+      </div>
+      <div className="card gap">
+        <b>Application details</b>
+        <div className="line"><span className="meta">Department</span><span>{app.dept}</span></div>
+        <div className="line"><span className="meta">Roblox username</span><span>{app.robloxUsername || "Not provided"}</span></div>
+      </div>
+      <div className="card">
+        <b>Your answers</b>
+        {app.answerList.map((item, i) => (
+          <div className="note" key={i}><div className="meta">{item.label}</div>{item.answer}</div>
+        ))}
+      </div>
+    </Page>
+  );
+}
+
+function Profile({ user }) {
+  const [data] = useLoad("/api/my-applications");
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function deleteEverything() {
+    setBusy(true);
+    setError("");
+    const r = await call("/api/me", "DELETE");
+    if (!r.ok) { setError("Something went wrong and nothing was deleted. Please try again."); setBusy(false); return; }
+    try {
+      Object.keys(localStorage).filter(key => key.startsWith("lumo-draft-" + user.id)).forEach(key => localStorage.removeItem(key));
+    } catch (e) {}
+    window.location.href = "/";
+  }
+
+  return (
+    <Page title="Profile" sub="Your Discord account and the data we keep about you.">
+      <div className="card gap lift">
+        <div className="account big">
+          <img className="avatar" src={user.avatar} alt="" />
+          <div>
+            <div className="name">{user.username} {user.isStaff && <Badge status="Staff" />}</div>
+            <div className="meta">Discord ID: {user.id}{user.roleLabel ? " • " + user.roleLabel : ""}</div>
+          </div>
+        </div>
+        <hr className="rule" />
+        <div className="line" style={{ margin: 0 }}>
+          <span className="meta">Applications submitted</span>
+          <span>{data ? data.applications.length : "..."}</span>
+        </div>
+      </div>
+
+      <div className="card gap">
+        <b>Your data</b>
+        <p className="meta" style={{ marginTop: 6 }}>This is everything we store about you. It is encrypted in our database.</p>
+        <ul className="datalist">
+          <li>Your Discord ID and display name, taken from your Discord login</li>
+          <li>Each application you submit: the position, the date, the status, your Roblox details and your answers</li>
+          <li>Drafts you save, which stay in your own browser only</li>
+        </ul>
+        <a className="btn plain" href="/api/my-data" download>Download my data</a>
+      </div>
+
+      <div className="card danger">
+        <b>Delete my data</b>
+        <p style={{ margin: "6px 0 14px", lineHeight: 1.6 }}>
+          This permanently deletes all of your applications and answers, plus any staff notes about them, clears your saved drafts and logs you out.
+          It can't be undone. Copies in our host's backups are removed when those backups expire.
+        </p>
+        <label htmlFor="confirm">Type DELETE to confirm</label>
+        <input id="confirm" value={typed} onChange={e => setTyped(e.target.value)} autoComplete="off" />
+        {error && <p className="error">{error}</p>}
+        <div>
+          <button className="btn red" disabled={typed !== "DELETE" || busy} onClick={deleteEverything}>
+            {busy ? "Deleting..." : "Delete everything"}
+          </button>
+        </div>
+      </div>
+    </Page>
+  );
+}
+
+/* ============================================================
+   STAFF AREA
+   ============================================================ */
+function StaffPage({ title, sub, view, go, user, back, backText, badge, children }) {
+  const [unread] = useLoad("/api/staff/unread");
+  const can = p => user.perms.includes(p);
+  const items = [
+    ["overview", "Overview", true],
+    ["applications", "Applications", can("apps.view")],
+    ["positions", "Positions", can("positions.view")],
+    ["departments", "Departments", can("departments.view")],
+    ["members", "Staff", can("staff.view")],
+    ["analytics", "Analytics", can("analytics.view")],
+    ["notifications", "Notifications" + (unread && unread.count > 0 ? " (" + unread.count + ")" : ""), true],
+  ];
+  return (
+    <Page wide title={title} sub={sub} back={back} backText={backText} badge={badge}>
+      <div className="card gap lift row">
+        {items.filter(i => i[2]).map(([id, label]) => (
+          <button key={id} className={"chip " + (view === id ? "on" : "")} onClick={() => go(id)}>{label}</button>
+        ))}
+      </div>
+      {children}
+    </Page>
+  );
+}
+
+function Loading({ error }) {
+  return <div className="card">{error ? <span className="error">{error}</span> : "Loading..."}</div>;
+}
+
+function Person({ item }) {
+  return (
+    <div className="person">
+      {item.robloxAvatar ? <img className="avatar" src={item.robloxAvatar} alt="" /> : <span className="avatar"></span>}
+      <div>
+        <div style={{ fontWeight: 600 }}>{item.username}</div>
+        <div className="meta">{item.robloxUsername ? "Roblox: " + item.robloxUsername : "No Roblox name"}</div>
+      </div>
+    </div>
+  );
+}
+
+function Overview({ user, go, openReview }) {
+  const [data, error] = useLoad("/api/staff/overview");
+  const stats = data ? [
+    ["Total applications", data.total], ["Awaiting review", data.counts["Pending"]], ["Under review", data.counts["Under review"]],
+    ["Shortlisted", data.counts["Shortlisted"]], ["Interviews", data.counts["Interview"]],
+    ["Accepted", data.counts["Accepted"]], ["Rejected", data.counts["Rejected"]],
+  ] : [];
+
+  return (
+    <StaffPage title="Recruitment overview" sub={"Welcome back, " + user.username + "."} view="overview" go={go} user={user}>
+      {!data && <Loading error={error} />}
+      {data && (
+        <div>
+          {data.waiting > 0 && (
+            <div className="flag gap">{data.waiting} unassigned application{data.waiting === 1 ? " has" : "s have"} been waiting more than 3 days.</div>
+          )}
+          <div className="stats">
+            {stats.map(([label, value]) => <div className="card stat" key={label}><b>{value}</b><span className="meta">{label}</span></div>)}
+          </div>
+          <div className="two gap">
+            <div className="card">
+              <b>Recruitment pipeline</b>
+              {STATUSES.map(s => (
+                <div key={s}>
+                  <div className="line"><span>{STATUS_LABEL[s] || s}</span><span>{data.counts[s]}</span></div>
+                  <Bar value={data.counts[s]} max={data.total} />
+                </div>
+              ))}
+            </div>
+            <div className="card">
+              <b>Recent staff activity</b>
+              {data.activity.length === 0 && <p className="meta" style={{ marginTop: 10 }}>Nothing yet.</p>}
+              {data.activity.map((a, i) => (
+                <div className="note" key={i} style={a.applicationId ? { cursor: "pointer" } : {}} onClick={() => a.applicationId && openReview(a.applicationId)}>
+                  <div className="meta">{niceDateTime(a.date)}</div>{a.text}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="card wrap">
+            <div style={{ padding: "12px 12px 0" }}><b>Recent applications</b></div>
+            {data.recent.length === 0 ? <p style={{ padding: 12 }} className="meta">No applications yet.</p> : (
+              <table>
+                <thead><tr><th>Applicant</th><th>Position</th><th>Submitted</th><th>Score</th><th>Status</th><th></th></tr></thead>
+                <tbody>{data.recent.map(a => (
+                  <tr key={a.id}>
+                    <td><Person item={a} /></td><td>{a.title}</td><td>{niceDate(a.date)}</td>
+                    <td>{a.score === null ? "-" : a.score + " / 100"}</td><td><Badge status={a.status} /></td>
+                    <td><button className="btn small" onClick={() => openReview(a.id)}>Review</button></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+function ApplicationList({ user, go, openReview }) {
+  const can = p => user.perms.includes(p);
+  const canSet = s => can("apps.decide") || (can("apps.review") && (s === "Under review" || s === "Shortlisted"));
+  const allowed = STATUSES.filter(canSet);
+
+  const [filters, setFilters] = useState({ search: "", status: "", dept: "", position: "", from: "", to: "", minScore: "", maxScore: "", assigned: "", sort: "submitted", dir: "desc", page: 1 });
+  const [searchText, setSearchText] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [bulk, setBulk] = useState({ action: "status", value: allowed[0] || "" });
+  const [message, setMessage] = useState("");
+  const [lookups] = useLoad("/api/staff/lookups");
+
+  function change(values) {
+    setFilters(f => ({ ...f, page: 1, ...values }));
+    setSelected([]);
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => change({ search: searchText }), 350);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const query = new URLSearchParams(Object.entries(filters).filter(([, v]) => v !== "")).toString();
+  const [data, error, reload] = useLoad("/api/staff/applications?" + query);
+  const rows = data ? data.rows : [];
+
+  function sortBy(field) {
+    change({ sort: field, dir: filters.sort === field && filters.dir === "desc" ? "asc" : "desc" });
+  }
+  function arrow(field) { return filters.sort === field ? (filters.dir === "desc" ? " ↓" : " ↑") : ""; }
+  function toggle(id) { setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]); }
+  function toggleAll() { setSelected(selected.length === rows.length ? [] : rows.map(r => r.id)); }
+
+  async function runBulk() {
+    if (bulk.action === "status" && bulk.value === "Rejected" && !window.confirm("Reject " + selected.length + " applications?")) return;
+    const r = await call("/api/staff/applications/bulk", "POST", { ids: selected, action: bulk.action, value: bulk.value || null });
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    setMessage(r.data.updated + " applications updated.");
+    setSelected([]);
+    reload();
+  }
+
+  const exportQuery = new URLSearchParams(Object.entries(filters).filter(([k, v]) => v !== "" && k !== "page")).toString();
+  const canBulk = allowed.length > 0 || can("apps.assign");
+
+  return (
+    <StaffPage title="Applications" sub="Search, filter and review everyone who has applied." view="applications" go={go} user={user}>
+      <div className="card gap">
+        <div className="row">
+          <input className="grow" placeholder="Search by name, Roblox username, Discord ID or application ID..." value={searchText} onChange={e => setSearchText(e.target.value)} />
+          {can("apps.export") && <a className="btn plain" href={"/api/staff/applications/export?" + exportQuery} download>Export CSV</a>}
+        </div>
+        <div className="filters">
+          <select value={filters.status} onChange={e => change({ status: e.target.value })}>
+            <option value="">All statuses</option>{STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>)}
+          </select>
+          <select value={filters.dept} onChange={e => change({ dept: e.target.value })}>
+            <option value="">All departments</option>{lookups && lookups.departments.map(d => <option key={d}>{d}</option>)}
+          </select>
+          <select value={filters.position} onChange={e => change({ position: e.target.value })}>
+            <option value="">All positions</option>{lookups && lookups.positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </select>
+          <select value={filters.assigned} onChange={e => change({ assigned: e.target.value })}>
+            <option value="">Any reviewer</option><option value="me">Assigned to me</option><option value="unassigned">Unassigned</option>
+            {lookups && lookups.staff.map(s => <option key={s.id} value={s.id}>{s.username}</option>)}
+          </select>
+          <input type="date" title="Submitted from" value={filters.from} onChange={e => change({ from: e.target.value })} />
+          <input type="date" title="Submitted to" value={filters.to} onChange={e => change({ to: e.target.value })} />
+          <input type="number" min="0" max="100" placeholder="Min score" value={filters.minScore} onChange={e => change({ minScore: e.target.value })} />
+          <input type="number" min="0" max="100" placeholder="Max score" value={filters.maxScore} onChange={e => change({ maxScore: e.target.value })} />
+        </div>
+      </div>
+
+      {canBulk && selected.length > 0 && (
+        <div className="card gap row">
+          <b>{selected.length} selected</b>
+          <select value={bulk.action} onChange={e => setBulk({ action: e.target.value, value: e.target.value === "status" ? allowed[0] || "" : "" })}>
+            {allowed.length > 0 && <option value="status">Change status</option>}
+            {can("apps.assign") && <option value="assign">Assign reviewer</option>}
+          </select>
+          {bulk.action === "status"
+            ? <select value={bulk.value} onChange={e => setBulk({ ...bulk, value: e.target.value })}>{allowed.map(s => <option key={s} value={s}>{STATUS_LABEL[s] || s}</option>)}</select>
+            : <select value={bulk.value} onChange={e => setBulk({ ...bulk, value: e.target.value })}>
+                <option value="">Remove reviewer</option>{lookups && lookups.staff.map(s => <option key={s.id} value={s.id}>{s.username}</option>)}
+              </select>}
+          <button className="btn" onClick={runBulk}>Apply</button>
+          <button className="btn plain" onClick={() => setSelected([])}>Clear</button>
+        </div>
+      )}
+      {message && <p className="meta gap">{message}</p>}
+
+      <div className="card wrap">
+        {!data ? <p style={{ padding: 12 }}>{error || "Loading..."}</p> : rows.length === 0 ? <p style={{ padding: 12 }}>No applications match these filters.</p> : (
+          <table>
+            <thead><tr>
+              {canBulk && <th><input type="checkbox" checked={selected.length === rows.length} onChange={toggleAll} /></th>}
+              <th className="sortable" onClick={() => sortBy("applicant")}>Applicant{arrow("applicant")}</th>
+              <th className="sortable" onClick={() => sortBy("position")}>Position{arrow("position")}</th>
+              <th className="sortable" onClick={() => sortBy("dept")}>Department{arrow("dept")}</th>
+              <th className="sortable" onClick={() => sortBy("submitted")}>Submitted{arrow("submitted")}</th>
+              <th className="sortable" onClick={() => sortBy("score")}>Score{arrow("score")}</th>
+              <th className="sortable" onClick={() => sortBy("status")}>Status{arrow("status")}</th>
+              <th className="sortable" onClick={() => sortBy("assigned")}>Reviewer{arrow("assigned")}</th>
+              <th></th>
+            </tr></thead>
+            <tbody>{rows.map(a => (
+              <tr key={a.id}>
+                {canBulk && <td><input type="checkbox" checked={selected.includes(a.id)} onChange={() => toggle(a.id)} /></td>}
+                <td><Person item={a} /></td><td>{a.title}</td><td>{a.dept}</td><td>{niceDate(a.date)}</td>
+                <td>{a.score === null ? "-" : a.score + " / 100"}</td><td><Badge status={a.status} /></td>
+                <td>{a.assignee || <span className="meta">Unassigned</span>}</td>
+                <td><button className="btn small" onClick={() => openReview(a.id)}>Review</button></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+      {data && (
+        <div className="pager">
+          <button className="btn plain" disabled={filters.page <= 1} onClick={() => change({ page: filters.page - 1 })}>Previous</button>
+          <span className="meta">Page {data.page} of {data.pages} • {data.total} applications</span>
+          <button className="btn plain" disabled={filters.page >= data.pages} onClick={() => change({ page: filters.page + 1 })}>Next</button>
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+function Review({ id, user, go, back }) {
+  const [data, error, reload] = useLoad("/api/staff/applications/" + id);
+  const [note, setNote] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const can = p => user.perms.includes(p);
+  const canSet = s => can("apps.decide") || (can("apps.review") && (s === "Under review" || s === "Shortlisted"));
+
+  async function act(path, body, confirmText) {
+    if (confirmText && !window.confirm(confirmText)) return false;
+    setBusy(true);
+    setMessage("");
+    const r = await call("/api/staff/applications/" + id + "/" + path, "POST", body || {});
+    setBusy(false);
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return false; }
+    reload();
+    return true;
+  }
+
+  async function addNote() {
+    if (!note.trim()) return;
+    if (await act("notes", { note: note })) setNote("");
+  }
+
+  if (!data) {
+    return (
+      <StaffPage title="Application" view="applications" go={go} user={user} back={back} backText="Back to applications">
+        <Loading error={error} />
+      </StaffPage>
+    );
+  }
+
+  const a = data.application;
+  const s = data.screening;
+  const age = a.robloxCreated ? Math.floor((Date.now() - new Date(a.robloxCreated).getTime()) / 86400000) : null;
+
+  return (
+    <StaffPage title={a.username} sub={a.title + " • " + a.dept} view="applications" go={go} user={user} back={back} backText="Back to applications" badge={<Badge status={a.status} />}>
+      <div className="card gap">
+        <div className="row">
+          <div className="person grow">
+            {a.robloxAvatar ? <img className="avatar" style={{ width: 72, height: 72 }} src={a.robloxAvatar} alt="" /> : <span className="avatar" style={{ width: 72, height: 72 }}></span>}
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{a.robloxUsername || "No Roblox username"}</div>
+              <div className="meta">Roblox ID: {a.robloxId || "Unknown"}{age !== null ? " • Account age " + age + " days" : ""}</div>
+              <div className="meta">Discord: {a.username} ({a.discordId})</div>
+            </div>
+          </div>
+          <div>
+            <div className="meta">Submitted {niceDateTime(a.date)}</div>
+            <div className="meta">Reviewer: {a.assignee || "Nobody yet"}</div>
+          </div>
+        </div>
+        <hr className="rule" />
+        <div className="row">
+          {ACTIONS.filter(([status]) => canSet(status)).map(([status, label, cls]) => (
+            <button key={status} className={cls} disabled={busy || a.status === status}
+              onClick={() => act("status", { status: status }, (status === "Accepted" || status === "Rejected") ? label + " for " + a.username + "?" : null)}>
+              {label}
+            </button>
+          ))}
+          {can("apps.assign") && (
+            <select value={a.assignedTo || ""} disabled={busy} onChange={e => act("assign", { staffId: e.target.value || null })}>
+              <option value="">Unassigned</option>
+              {data.people.map(p => <option key={p.id} value={p.id}>Assign to {p.username}</option>)}
+            </select>
+          )}
+        </div>
+        {message && <p className="error" style={{ marginTop: 12 }}>{message}</p>}
+      </div>
+
+      <div className="two gap">
+        <div className="stack">
+          <div className="card">
+            <b>Application answers</b>
+            <p className="meta" style={{ marginTop: 4 }}>The questions below were set by staff for this position.</p>
+            {data.answers.map((item, i) => (
+              <div className="note" key={i}>
+                <div className="meta"><b>{item.label}</b> • {CATEGORY_LABELS[item.category] || "General"}</div>
+                {item.answer}
+              </div>
+            ))}
+          </div>
+
+          <div className="card">
+            <b>Internal notes</b>
+            <p className="meta" style={{ marginTop: 4 }}>Only staff can see these. Applicants never can.</p>
+            {data.notes.length === 0 && <p className="meta" style={{ marginTop: 10 }}>No notes yet.</p>}
+            {data.notes.map((n, i) => (
+              <div className="note" key={i}>
+                <div className="meta"><b>{n.who}</b> • {niceDateTime(n.date)}</div>
+                {n.text}
+              </div>
+            ))}
+            {can("apps.note") && (
+              <div style={{ marginTop: 12 }}>
+                <textarea placeholder="Add a note..." value={note} onChange={e => setNote(e.target.value)} maxLength={2000} />
+                <button className="btn" style={{ marginTop: 8 }} disabled={busy} onClick={addNote}>Add note</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="stack">
+          <div className="card">
+            <div className="row"><b className="grow">Automated screening</b>
+              <button className="btn small plain" disabled={busy} onClick={() => act("rescore")}>Re-run</button></div>
+            <div className="big-score" style={{ marginTop: 12 }}>{s.score === null ? "-" : s.score}<span className="meta"> / 100</span></div>
+            <p className="meta" style={{ margin: "6px 0 10px" }}>A guide to help staff. It never decides anything on its own.</p>
+            {Object.entries(s.categories).map(([name, c]) => (
+              <div key={name}>
+                <div className="line"><span>{CATEGORY_LABELS[name] || name}</span><span>{c.score} / {c.max}</span></div>
+                <Bar value={c.score} max={c.max} />
+              </div>
+            ))}
+            {!s.meetsRequirements && <div className="flag">Does not meet this position's minimum requirements.</div>}
+            {s.flags.map((f, i) => <div className="flag" key={i}>{f}</div>)}
+            {s.flags.length === 0 && s.meetsRequirements && <div className="ok">No concerns found.</div>}
+          </div>
+
+          <div className="card">
+            <div className="row"><b className="grow">AI summary</b>
+              {data.aiAvailable && <button className="btn small plain" disabled={busy} onClick={() => act("summary")}>{data.summary ? "Refresh" : "Generate"}</button>}</div>
+            {data.summary ? <div className="note">{data.summary}</div>
+              : <p className="meta" style={{ marginTop: 8 }}>{data.aiAvailable ? "No summary yet." : "AI summaries are switched off. An administrator can turn them on in the server settings."}</p>}
+          </div>
+
+          <div className="card">
+            <b>History</b>
+            <ul className="timeline">
+              {data.history.length === 0 && <li className="meta">Nothing yet.</li>}
+              {data.history.map((h, i) => <li key={i}><div className="meta">{niceDateTime(h.date)}</div>{h.text}</li>)}
+              <li><div className="meta">{niceDateTime(a.date)}</div>Application submitted</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </StaffPage>
+  );
+}
+
+function newQuestion() {
+  return { id: "q" + Math.random().toString(36).slice(2, 8), label: "", category: "general", minWords: 0, keywords: "" };
+}
+
+function PositionEditor({ initial, departments, onDone, onCancel }) {
+  const [p, setP] = useState(() => initial
+    ? { ...initial, requirementsText: initial.requirements.join("\n"), closesAt: initial.closesAt || "" }
+    : { title: "", departmentId: departments[0] ? departments[0].id : "", type: "Full-time", blurb: "", about: "", requirementsText: "", closesAt: "", minAccountDays: 0, notifyAt: 0, status: "draft", questions: [newQuestion()] });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const set = values => setP({ ...p, ...values });
+
+  function setQuestion(index, values) { set({ questions: p.questions.map((q, i) => i === index ? { ...q, ...values } : q) }); }
+  function move(index, delta) {
+    const list = [...p.questions];
+    const other = index + delta;
+    if (other < 0 || other >= list.length) return;
+    [list[index], list[other]] = [list[other], list[index]];
+    set({ questions: list });
+  }
+
+  async function save() {
+    if (p.title.trim().length < 3) { setError("Give the position a title."); return; }
+    if (p.questions.some(q => q.label.trim().length < 3)) { setError("Every question needs some text."); return; }
+    setBusy(true);
+    setError("");
+    const body = { ...p, requirements: p.requirementsText.split("\n") };
+    const r = initial ? await call("/api/staff/positions/" + initial.id, "PUT", body) : await call("/api/staff/positions", "POST", body);
+    setBusy(false);
+    if (!r.ok) { setError(r.data.error || "Something went wrong."); return; }
+    onDone();
+  }
+
+  return (
+    <div className="card gap">
+      <h3 style={{ marginBottom: 14 }}>{initial ? "Edit position" : "New position"}</h3>
+      <div className="grid2">
+        <Field label="Title"><input value={p.title} maxLength={100} onChange={e => set({ title: e.target.value })} /></Field>
+        <Field label="Department">
+          <select style={{ width: "100%" }} value={p.departmentId} onChange={e => set({ departmentId: Number(e.target.value) })}>
+            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </Field>
+        <Field label="Hours">
+          <select style={{ width: "100%" }} value={p.type} onChange={e => set({ type: e.target.value })}><option>Full-time</option><option>Part-time</option></select>
+        </Field>
+        <Field label="Status">
+          <select style={{ width: "100%" }} value={p.status} onChange={e => set({ status: e.target.value })}>
+            <option value="draft">Draft (hidden)</option><option value="published">Published (open)</option><option value="closed">Closed</option>
+          </select>
+        </Field>
+        <Field label="Closing date (optional)"><input type="date" value={p.closesAt} onChange={e => set({ closesAt: e.target.value })} /></Field>
+        <Field label="Minimum Roblox account age in days (0 for none)"><input type="number" min="0" value={p.minAccountDays} onChange={e => set({ minAccountDays: e.target.value })} /></Field>
+        <Field label="Notify managers at this many applications (0 for off)"><input type="number" min="0" value={p.notifyAt} onChange={e => set({ notifyAt: e.target.value })} /></Field>
+      </div>
+      <Field label="Short summary"><input value={p.blurb} maxLength={200} onChange={e => set({ blurb: e.target.value })} /></Field>
+      <Field label="About the role"><textarea value={p.about} maxLength={4000} onChange={e => set({ about: e.target.value })} /></Field>
+      <Field label="Requirements (one per line)"><textarea value={p.requirementsText} onChange={e => set({ requirementsText: e.target.value })} /></Field>
+
+      <b>Application questions</b>
+      <p className="meta" style={{ margin: "4px 0 10px" }}>Each question is worth an equal share of the 100-point score. Length counts for 60% and keywords for 40%.</p>
+      {p.questions.map((q, i) => (
+        <div className="qrow" key={q.id}>
+          <input placeholder="Question" value={q.label} maxLength={200} onChange={e => setQuestion(i, { label: e.target.value })} />
+          <div className="row">
+            <select value={q.category} onChange={e => setQuestion(i, { category: e.target.value })}>
+              {Object.entries(CATEGORY_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
+            <input style={{ width: 140 }} type="number" min="0" title="Minimum words" placeholder="Min words" value={q.minWords} onChange={e => setQuestion(i, { minWords: e.target.value })} />
+            <input className="grow" placeholder="Keywords to look for, separated by commas" value={q.keywords} onChange={e => setQuestion(i, { keywords: e.target.value })} />
+            <button className="btn small plain" onClick={() => move(i, -1)}>↑</button>
+            <button className="btn small plain" onClick={() => move(i, 1)}>↓</button>
+            <button className="btn small red" disabled={p.questions.length === 1} onClick={() => set({ questions: p.questions.filter((x, n) => n !== i) })}>Remove</button>
+          </div>
+        </div>
+      ))}
+      <button className="btn plain" disabled={p.questions.length >= 20} onClick={() => set({ questions: [...p.questions, newQuestion()] })}>Add question</button>
+
+      {error && <p className="error" style={{ marginTop: 14 }}>{error}</p>}
+      <div className="row" style={{ marginTop: 16 }}>
+        <button className="btn" disabled={busy} onClick={save}>{busy ? "Saving..." : "Save position"}</button>
+        <button className="btn plain" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function Positions({ user, go }) {
+  const [data, error, reload] = useLoad("/api/staff/positions");
+  const [editing, setEditing] = useState(null);
+  const [message, setMessage] = useState("");
+  const manage = user.perms.includes("positions.manage");
+
+  async function setStatus(id, status) {
+    const r = await call("/api/staff/positions/" + id + "/status", "POST", { status: status });
+    if (!r.ok) setMessage(r.data.error || "Something went wrong.");
+    else { setMessage(""); reload(); }
+  }
+
+  return (
+    <StaffPage title="Positions" sub="Create vacancies, set their questions and control who can apply." view="positions" go={go} user={user}>
+      {!data && <Loading error={error} />}
+      {data && editing && (
+        <PositionEditor initial={editing === "new" ? null : editing} departments={data.departments}
+          onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />
+      )}
+      {data && !editing && (
+        <div>
+          {manage && <div className="gap"><button className="btn" onClick={() => setEditing("new")}>New position</button></div>}
+          {message && <p className="error">{message}</p>}
+          <div className="card wrap">
+            <table>
+              <thead><tr><th>Position</th><th>Department</th><th>Status</th><th>Applications</th><th>Closes</th>{manage && <th></th>}</tr></thead>
+              <tbody>{data.positions.map(p => (
+                <tr key={p.id}>
+                  <td><b>{p.title}</b><div className="meta">{p.questions.length} questions</div></td>
+                  <td>{p.department}</td>
+                  <td><Badge status={p.status === "draft" ? "Draft" : p.status === "published" ? "Published" : "Closed"} /></td>
+                  <td>{p.applications}</td>
+                  <td>{p.closesAt ? niceDate(p.closesAt) : "-"}</td>
+                  {manage && (
+                    <td><div className="row">
+                      <button className="btn small plain" onClick={() => setEditing(p)}>Edit</button>
+                      {p.status === "draft" && <button className="btn small" onClick={() => setStatus(p.id, "published")}>Publish</button>}
+                      {p.status === "published" && <button className="btn small plain" onClick={() => setStatus(p.id, "draft")}>Unpublish</button>}
+                      {p.status === "published" && <button className="btn small red" onClick={() => setStatus(p.id, "closed")}>Close</button>}
+                      {p.status === "closed" && <button className="btn small" onClick={() => setStatus(p.id, "published")}>Reopen</button>}
+                    </div></td>
+                  )}
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+function Departments({ user, go }) {
+  const [data, error, reload] = useLoad("/api/staff/departments");
+  const [form, setForm] = useState(null);
+  const [message, setMessage] = useState("");
+  const manage = user.perms.includes("departments.manage");
+
+  async function save() {
+    const body = { name: form.name, description: form.description, leadId: form.leadId || null };
+    const r = form.id ? await call("/api/staff/departments/" + form.id, "PUT", body) : await call("/api/staff/departments", "POST", body);
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    setMessage("");
+    setForm(null);
+    reload();
+  }
+
+  return (
+    <StaffPage title="Departments" sub="The teams you recruit for." view="departments" go={go} user={user}>
+      {!data && <Loading error={error} />}
+      {data && (
+        <div>
+          {manage && !form && <div className="gap"><button className="btn" onClick={() => setForm({ name: "", description: "", leadId: "" })}>New department</button></div>}
+          {form && (
+            <div className="card gap">
+              <h3 style={{ marginBottom: 14 }}>{form.id ? "Edit department" : "New department"}</h3>
+              <div className="grid2">
+                <Field label="Name"><input value={form.name} maxLength={50} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
+                <Field label="Department lead">
+                  <select style={{ width: "100%" }} value={form.leadId || ""} onChange={e => setForm({ ...form, leadId: e.target.value })}>
+                    <option value="">No lead</option>{data.people.map(p => <option key={p.id} value={p.id}>{p.username}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <Field label="Description"><textarea value={form.description} maxLength={300} onChange={e => setForm({ ...form, description: e.target.value })} /></Field>
+              {message && <p className="error">{message}</p>}
+              <div className="row"><button className="btn" onClick={save}>Save</button><button className="btn plain" onClick={() => { setForm(null); setMessage(""); }}>Cancel</button></div>
+            </div>
+          )}
+          <div className="card wrap">
+            <table>
+              <thead><tr><th>Department</th><th>Lead</th><th>Staff</th><th>Open positions</th><th>Applications</th>{manage && <th></th>}</tr></thead>
+              <tbody>{data.departments.map(d => (
+                <tr key={d.id}>
+                  <td><b>{d.name}</b><div className="meta">{d.description}</div></td>
+                  <td>{d.lead || <span className="meta">None</span>}</td>
+                  <td>{d.staff.length === 0 ? <span className="meta">None</span> : d.staff.join(", ")}</td>
+                  <td>{d.openPositions}</td><td>{d.applications}</td>
+                  {manage && <td><button className="btn small plain" onClick={() => setForm({ id: d.id, name: d.name, description: d.description, leadId: d.leadId || "" })}>Edit</button></td>}
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+function Members({ user, go }) {
+  const [data, error, reload] = useLoad("/api/staff/members");
+  const [form, setForm] = useState(null);
+  const [message, setMessage] = useState("");
+  const manage = user.perms.includes("staff.manage");
+
+  async function save() {
+    const r = await call("/api/staff/members", "POST", form);
+    if (!r.ok) { setMessage(r.data.error || "Something went wrong."); return; }
+    setMessage("");
+    setForm(null);
+    reload();
+  }
+  async function remove(m) {
+    if (!window.confirm("Remove " + m.username + " from staff?")) return;
+    const r = await call("/api/staff/members/" + m.id, "DELETE");
+    if (!r.ok) setMessage(r.data.error || "Something went wrong.");
+    else { setMessage(""); reload(); }
+  }
+
+  return (
+    <StaffPage title="Staff" sub="Who can review applications, and what they can do." view="members" go={go} user={user}>
+      {!data && <Loading error={error} />}
+      {data && (
+        <div>
+          {manage && !form && <div className="gap"><button className="btn" onClick={() => setForm({ discordId: "", role: "reviewer", departmentId: "", responsibilities: "" })}>Add staff member</button></div>}
+          {form && (
+            <div className="card gap">
+              <h3 style={{ marginBottom: 14 }}>{form.editing ? "Edit staff member" : "Add staff member"}</h3>
+              <div className="grid2">
+                <Field label="Discord ID"><input value={form.discordId} disabled={form.editing} onChange={e => setForm({ ...form, discordId: e.target.value })} /></Field>
+                <Field label="Role">
+                  <select style={{ width: "100%" }} value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                    {data.roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Department (needed for leads)">
+                  <select style={{ width: "100%" }} value={form.departmentId || ""} onChange={e => setForm({ ...form, departmentId: e.target.value })}>
+                    <option value="">None</option>{data.departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Recruitment responsibilities"><input value={form.responsibilities} maxLength={200} onChange={e => setForm({ ...form, responsibilities: e.target.value })} /></Field>
+              </div>
+              {message && <p className="error">{message}</p>}
+              <div className="row"><button className="btn" onClick={save}>Save</button><button className="btn plain" onClick={() => { setForm(null); setMessage(""); }}>Cancel</button></div>
+            </div>
+          )}
+          {!form && message && <p className="error">{message}</p>}
+          <div className="card wrap">
+            <table>
+              <thead><tr><th>Member</th><th>Role</th><th>Department</th><th>Responsibilities</th><th>Joined</th>{manage && <th></th>}</tr></thead>
+              <tbody>{data.members.map(m => (
+                <tr key={m.id}>
+                  <td><div className="person">{m.avatar ? <img className="avatar" src={m.avatar} alt="" /> : <span className="avatar"></span>}
+                    <div><div style={{ fontWeight: 600 }}>{m.username}</div><div className="meta">{m.source === "discord" ? "Via Discord role" : m.source === "env" ? "Server admin" : "Added by an admin"}</div></div></div></td>
+                  <td>{m.roleLabel}</td>
+                  <td>{m.department || "-"}</td>
+                  <td>{m.responsibilities || "-"}</td>
+                  <td>{niceDate(m.joined)}</td>
+                  {manage && <td><div className="row">
+                    <button className="btn small plain" onClick={() => setForm({ discordId: m.discordId, role: m.role, departmentId: m.departmentId || "", responsibilities: m.responsibilities, editing: true })}>Edit</button>
+                    {m.id !== data.me && <button className="btn small red" onClick={() => remove(m)}>Remove</button>}
+                  </div></td>}
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+          <div className="card" style={{ marginTop: 16 }}>
+            <b>What each role can do</b>
+            <ul className="datalist">
+              <li>Administrator: everything, including managing staff and departments.</li>
+              <li>Recruitment Manager: all applications and decisions, assigning reviewers, positions, analytics and CSV export.</li>
+              <li>Department Lead: applications for their own department, including decisions.</li>
+              <li>Application Reviewer: view applications, add notes, start reviews and shortlist.</li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+function Analytics({ user, go }) {
+  const [data, error] = useLoad("/api/staff/analytics");
+
+  const days = [];
+  for (let i = 29; i >= 0; i--) days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+  const counts = {};
+  if (data) data.perDay.forEach(r => { counts[r.day] = r.n; });
+  const maxDay = Math.max(1, ...days.map(d => counts[d] || 0));
+
+  let content = <Loading error={error} />;
+  if (data) {
+    const st = data.statuses;
+    const total = Object.values(st).reduce((x, y) => x + y, 0);
+    const decided = st["Accepted"] + st["Rejected"];
+    const rate = (n, of) => of > 0 ? Math.round(n / of * 100) + "%" : "-";
+    const review = data.averageReviewHours;
+    const funnel = [
+      ["Submitted", total],
+      ["Reviewed", total - st["Pending"]],
+      ["Shortlisted or later", st["Shortlisted"] + st["Interview"] + st["Accepted"]],
+      ["Interview or later", st["Interview"] + st["Accepted"]],
+      ["Accepted", st["Accepted"]],
+    ];
+    const maxPopular = Math.max(1, ...data.popular.map(p => p.n));
+    const maxDept = Math.max(1, ...data.byDept.map(d => d.n));
+
+    content = (
+      <div>
+        <div className="stats">
+          <div className="card stat"><b>{rate(st["Accepted"], decided)}</b><span className="meta">Acceptance rate</span></div>
+          <div className="card stat"><b>{rate(st["Rejected"], decided)}</b><span className="meta">Rejection rate</span></div>
+          <div className="card stat"><b>{data.averageScore === null ? "-" : data.averageScore}</b><span className="meta">Average score</span></div>
+          <div className="card stat"><b>{review === null ? "-" : review < 48 ? Math.round(review) + "h" : Math.round(review / 24) + "d"}</b><span className="meta">Average time to first decision</span></div>
+        </div>
+        <div className="card gap">
+          <b>Applications, last 30 days</b>
+          <div className="chart">{days.map(d => <i key={d} title={d + ": " + (counts[d] || 0)} style={{ height: ((counts[d] || 0) / maxDay * 100) + "%" }}></i>)}</div>
+          <div className="line" style={{ marginBottom: 0 }}><span className="meta">{days[0]}</span><span className="meta">{days[29]}</span></div>
+        </div>
+        <div className="two even gap">
+          <div className="card"><b>Recruitment conversion</b>
+            <p className="meta">Based on each application's current status.</p>
+            {funnel.map(([label, n]) => <div key={label}><div className="line"><span>{label}</span><span>{n} ({rate(n, total)})</span></div><Bar value={n} max={total} /></div>)}
+          </div>
+          <div className="card"><b>Most popular positions</b>
+            {data.popular.length === 0 && <p className="meta" style={{ marginTop: 10 }}>No data yet.</p>}
+            {data.popular.map(p => <div key={p.title}><div className="line"><span>{p.title}</span><span>{p.n}</span></div><Bar value={p.n} max={maxPopular} /></div>)}
+          </div>
+        </div>
+        <div className="card"><b>Applications by department</b>
+          {data.byDept.length === 0 && <p className="meta" style={{ marginTop: 10 }}>No data yet.</p>}
+          {data.byDept.map(d => <div key={d.name}><div className="line"><span>{d.name}</span><span>{d.n}</span></div><Bar value={d.n} max={maxDept} /></div>)}
+        </div>
+      </div>
+    );
+  }
+
+  return <StaffPage title="Analytics" sub="How recruitment is performing." view="analytics" go={go} user={user}>{content}</StaffPage>;
+}
+
+function Notifications({ user, go, openReview }) {
+  const [data, error, reload] = useLoad("/api/staff/notifications");
+  async function markRead() { await call("/api/staff/notifications/read", "POST"); reload(); }
+
+  return (
+    <StaffPage title="Notifications" sub="New applications, assignments and status changes." view="notifications" go={go} user={user}>
+      {!data && <Loading error={error} />}
+      {data && (
+        <div className="card">
+          <div className="row"><b className="grow">Latest</b><button className="btn small plain" onClick={markRead}>Mark all as read</button></div>
+          {data.notifications.length === 0 && <p className="meta" style={{ marginTop: 10 }}>You're all caught up.</p>}
+          {data.notifications.map(n => (
+            <div className={"note " + (n.isRead ? "" : "unread")} key={n.id} style={n.applicationId ? { cursor: "pointer" } : {}}
+              onClick={() => n.applicationId && openReview(n.applicationId)}>
+              <div className="meta">{niceDateTime(n.date)}</div>{n.text}
+            </div>
+          ))}
+        </div>
+      )}
+    </StaffPage>
+  );
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+function App() {
+  const [user, setUser] = useState(undefined);
+  const [page, setPage] = useState("careers");
+  const [picked, setPicked] = useState(null);
+  const [staffView, setStaffView] = useState("overview");
+  const [reviewId, setReviewId] = useState(null);
+  const [notice, setNotice] = useState(
+    new URLSearchParams(window.location.search).get("login") === "failed" ? "Discord login didn't work. Please try again." : ""
+  );
+
+  useEffect(() => {
+    call("/api/me").then(r => setUser(r.ok ? r.data.user : null));
+  }, []);
+
+  if (user === undefined) return null;
+
+  const staff = user !== null && user.isStaff;
+
+  function go(p) { setPage(p); setPicked(null); setNotice(""); window.scrollTo(0, 0); }
+  function openJob(job) { setPage("job"); setPicked(job); window.scrollTo(0, 0); }
+  function applied() { go("mine"); setNotice("Application submitted. You can track it here."); }
+  function staffGo(view) { setPage("staff"); setStaffView(view); setReviewId(null); setNotice(""); window.scrollTo(0, 0); }
+  function openReview(id) { setPage("staff"); setStaffView("review"); setReviewId(id); window.scrollTo(0, 0); }
+
+  const tabs = [["careers", "Careers"]];
+  if (user) tabs.push(["mine", "My applications"]);
+  if (staff) tabs.push(["staff", "Staff"]);
+
+  let screen;
+  if (page === "job" && picked) screen = <JobPage job={picked} user={user} back={() => go("careers")} submitted={applied} />;
+  else if (page === "profile" && user) screen = <Profile user={user} />;
+  else if (page === "mine" && user && picked) screen = <MyApplicationDetail app={picked} back={() => setPicked(null)} />;
+  else if (page === "mine" && user) screen = <MyApplications open={setPicked} goCareers={() => go("careers")} />;
+  else if (page === "staff" && staff) {
+    if (staffView === "review" && reviewId) screen = <Review key={reviewId} id={reviewId} user={user} go={staffGo} back={() => staffGo("applications")} />;
+    else if (staffView === "applications") screen = <ApplicationList user={user} go={staffGo} openReview={openReview} />;
+    else if (staffView === "positions") screen = <Positions user={user} go={staffGo} />;
+    else if (staffView === "departments") screen = <Departments user={user} go={staffGo} />;
+    else if (staffView === "members") screen = <Members user={user} go={staffGo} />;
+    else if (staffView === "analytics") screen = <Analytics user={user} go={staffGo} />;
+    else if (staffView === "notifications") screen = <Notifications user={user} go={staffGo} openReview={openReview} />;
+    else screen = <Overview user={user} go={staffGo} openReview={openReview} />;
+  }
+  else screen = <Careers open={openJob} />;
+
+  const activeTab = page === "job" ? "careers" : page;
+
+  return (
+    <div>
+      <header>
+        <img src="lumo_logos-7.png" alt="Lumo logo" />
+        <span className="brand">Lumo Careers</span>
+        <nav>
+          {tabs.map(([id, label]) => (
+            <button key={id} className={"tab " + (activeTab === id ? "on" : "")} onClick={() => id === "staff" ? staffGo("overview") : go(id)}>{label}</button>
+          ))}
+        </nav>
+        {user ? (
+          <div className="user">
+            <button className={"userlink " + (page === "profile" ? "on" : "")} onClick={() => go("profile")}>
+              <img className="avatar" src={user.avatar} alt="" />
+              <span>{user.username}</span>
+            </button>
+            <a className="logout" href="/auth/logout">Log out</a>
+          </div>
+        ) : (
+          <a className="tab login" href="/auth/discord">Log in with Discord</a>
+        )}
+      </header>
+      {notice && <div className="notice">{notice}</div>}
+      {screen}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
