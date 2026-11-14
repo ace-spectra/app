@@ -208,7 +208,7 @@ async def application_notification(payload: dict, x_lumo_notification_secret: st
                     f"Hi **{discord.utils.escape_markdown(applicant_name)}**! "
                     f"We've successfully received your application for "
                     f"**{discord.utils.escape_markdown(position_title)}**."
-                    "\\n\\nOur team will review it and contact you when there is an update."
+                    "\n\nOur team will review it and contact you when there is an update."
                 ),
                 color=discord.Color.from_rgb(43, 45, 49)
             )
