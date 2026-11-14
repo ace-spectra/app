@@ -232,13 +232,14 @@ function fullRole(staff) {
 async function staffOf(user) {
     if (!user || !user.isStaffRole) return null;
     const [rows] = await db.query(
-        "SELECT discord_id, username, role, dept, responsibilities, joined_at FROM staff WHERE discord_id = ? AND active = 1",
+        "SELECT discord_id, username, avatar, role, dept, responsibilities, joined_at FROM staff WHERE discord_id = ? AND active = 1",
         [blind(user.id)]
     );
     if (!rows.length) return null;
     return {
         id: rows[0].discord_id,
         username: decrypt(rows[0].username) || user.username,
+        avatar: rows[0].avatar || user.avatar || "",
         role: rows[0].role,
         dept: rows[0].dept,
         responsibilities: decrypt(rows[0].responsibilities),
@@ -309,7 +310,7 @@ async function hasStaffRole(accessToken) {
     return false;
 }
 
-async function registerStaff(id, username, hasStaff) {
+async function registerStaff(id, username, avatar, hasStaff) {
     const hashed = blind(id);
 
     if (!hasStaff) {
@@ -326,16 +327,18 @@ async function registerStaff(id, username, hasStaff) {
 
     await db.query(
         `INSERT INTO staff
-        (discord_id, discord_enc, username, role, active, source, joined_at)
-        VALUES (?, ?, ?, ?, 1, 'discord', UTC_TIMESTAMP())
+        (discord_id, discord_enc, username, avatar, role, active, source, joined_at)
+        VALUES (?, ?, ?, ?, ?, 1, 'discord', UTC_TIMESTAMP())
         ON DUPLICATE KEY UPDATE
         username = VALUES(username),
+        avatar = VALUES(avatar),
         discord_enc = VALUES(discord_enc),
         active = 1`,
         [
             hashed,
             encrypt(id),
             encrypt(username),
+            avatar || null,
             Number(adminCount.n) === 0 ? "Administrator" : "Reviewer"
         ]
     );
@@ -403,7 +406,7 @@ async function finishLogin(req, res, url) {
         const username = profile.global_name || profile.username;
         const isStaffRole = await hasStaffRole(token.access_token);
 
-        await registerStaff(profile.id, username, isStaffRole);
+        await registerStaff(profile.id, username, avatar, isStaffRole);
 
         const maxAge = isStaffRole ? 28800 : 604800;
         const sessionId = crypto.randomBytes(32).toString("hex");
@@ -570,11 +573,11 @@ function screen(answers, questions = null) {
     return result;
 }
 
-async function addEvent(appId, who, kind, text, meta = null) {
+async function addEvent(appId, who, kind, text, meta = null, author = null) {
     await db.query(
-        `INSERT INTO app_events (app_id, who, kind, text, meta, created_at)
-        VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
-        [appId, encrypt(who), kind, encrypt(text), meta]
+        `INSERT INTO app_events (app_id, who, kind, text, meta, author_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
+        [appId, encrypt(who), kind, encrypt(text), meta, author && (author.discordId || author.id) ? blind(author.discordId || author.id) : null]
     );
 }
 
@@ -710,7 +713,8 @@ async function setApplicationStatus(id, status, actor) {
         actor.username,
         "history",
         `Status changed from ${rows[0].status} to ${status}`,
-        status
+        status,
+        actor
     );
 
     const targets = [rows[0].assigned_to];
@@ -763,7 +767,9 @@ async function assignApplication(id, memberId, actor) {
         id,
         actor.username,
         "history",
-        assignedName ? `Assigned to ${assignedName}` : "Application unassigned"
+        assignedName ? `Assigned to ${assignedName}` : "Application unassigned",
+        null,
+        actor
     );
 
     if (assignedId && assignedId !== actor.id) {
@@ -868,7 +874,7 @@ async function submitApplication(req, res, user) {
         ]
     );
 
-    await addEvent(id, user.username, "history", "Application submitted");
+    await addEvent(id, user.username, "history", "Application submitted", null, user);
     await notifyManagers(
         `New application from ${user.username} for ${position.title}`,
         id,
@@ -1186,6 +1192,7 @@ async function staffRoutes(req, res, url, user) {
     const route = pathname.slice(base.length) || "/";
     const actor = {
         id: staff.id,
+        discordId: user.id,
         username: user.username
     };
 
@@ -1224,9 +1231,11 @@ async function staffRoutes(req, res, url, user) {
         );
 
         const [activityRows] = await db.query(
-            `SELECT e.*, a.username AS applicant, a.id AS application_id
+            `SELECT e.*, a.username AS applicant, a.id AS application_id,
+            s.username AS staff_username, s.avatar AS staff_avatar
             FROM app_events e
             JOIN applications a ON a.id = e.app_id
+            LEFT JOIN staff s ON s.discord_id = e.author_id
             WHERE ${scope.sql}
             ORDER BY e.id DESC LIMIT 12`,
             scope.args
@@ -1248,6 +1257,8 @@ async function staffRoutes(req, res, url, user) {
             recent: recentRows.map(applicationObject),
             activity: activityRows.map(row => ({
                 who: decrypt(row.who),
+                authorUsername: decrypt(row.staff_username) || decrypt(row.who),
+                authorAvatar: row.staff_avatar || "",
                 applicationId: row.application_id,
                 text: decrypt(row.text),
                 date: iso(row.created_at)
@@ -1395,7 +1406,10 @@ async function staffRoutes(req, res, url, user) {
             }));
 
             const [events] = await db.query(
-                "SELECT * FROM app_events WHERE app_id = ? ORDER BY id DESC",
+                `SELECT e.*, s.username AS staff_username, s.avatar AS staff_avatar
+                FROM app_events e
+                LEFT JOIN staff s ON s.discord_id = e.author_id
+                WHERE e.app_id = ? ORDER BY e.id DESC`,
                 [id]
             );
 
@@ -1407,6 +1421,8 @@ async function staffRoutes(req, res, url, user) {
                 .filter(event => event.kind === "note")
                 .map(event => ({
                     who: decrypt(event.who),
+                    authorUsername: decrypt(event.staff_username) || decrypt(event.who),
+                    authorAvatar: event.staff_avatar || "",
                     text: decrypt(event.text),
                     date: iso(event.created_at)
                 }));
@@ -1415,6 +1431,8 @@ async function staffRoutes(req, res, url, user) {
                 .filter(event => event.kind === "history")
                 .map(event => ({
                     who: decrypt(event.who),
+                    authorUsername: decrypt(event.staff_username) || decrypt(event.who),
+                    authorAvatar: event.staff_avatar || "",
                     text: decrypt(event.text),
                     date: iso(event.created_at)
                 }));
@@ -1485,7 +1503,7 @@ async function staffRoutes(req, res, url, user) {
                 const note = safeString(data.text || data.note, 2000);
                 if (!note) return sendError(res, 400, "Comment cannot be empty.");
 
-                await addEvent(id, user.username, "note", note);
+                await addEvent(id, user.username, "note", note, null, user);
                 return sendJson(res, 200, { ok: true });
             }
 
@@ -1500,7 +1518,7 @@ async function staffRoutes(req, res, url, user) {
                     [result.score, encrypt(JSON.stringify(result)), id]
                 );
 
-                await addEvent(id, user.username, "history", "Automated screening was re-run");
+                await addEvent(id, user.username, "history", "Automated screening was re-run", null, user);
                 return sendJson(res, 200, { ok: true, screening: result });
             }
 
@@ -1837,7 +1855,7 @@ async function staffRoutes(req, res, url, user) {
                 responsibilities: decrypt(row.responsibilities),
                 joined: iso(row.joined_at),
                 source: row.source || "admin",
-                avatar: "",
+                avatar: row.avatar || "",
                 you: row.discord_id === staff.id
             })),
             roles: ROLES.map(role => ({
@@ -2216,12 +2234,14 @@ async function setupDatabase() {
         ["applications", "assigned_name", "TEXT NULL"],
         ["applications", "reviewed_at", "DATETIME NULL"],
         ["staff", "discord_enc", "TEXT NULL"],
+        ["staff", "avatar", "TEXT NULL"],
         ["staff", "dept", "VARCHAR(50) NULL"],
         ["staff", "responsibilities", "TEXT NULL"],
         ["staff", "active", "TINYINT NOT NULL DEFAULT 1"],
         ["staff", "source", "VARCHAR(20) NOT NULL DEFAULT 'discord'"],
         ["staff", "joined_at", "DATETIME NULL"],
         ["app_events", "meta", "VARCHAR(50) NULL"],
+        ["app_events", "author_id", "VARCHAR(64) NULL"],
         ["notifications", "app_id", "VARCHAR(16) NULL"],
         ["notifications", "is_read", "TINYINT NOT NULL DEFAULT 0"]
     ];
