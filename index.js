@@ -610,21 +610,29 @@ async function notifyManagers(text, appId, department = null) {
 
 function staffScope(staff, alias = "") {
     const prefix = alias ? alias + "." : "";
+    if (staff.role === "Administrator") return { sql: "1=1", args: [] };
 
-    if (fullRole(staff)) {
-        return { sql: "1=1", args: [] };
+    const accessSql = `NOT EXISTS (
+        SELECT 1 FROM departments da WHERE da.name = ${prefix}dept
+    ) OR EXISTS (
+        SELECT 1 FROM departments da
+        WHERE da.name = ${prefix}dept
+        AND (da.role_access IS NULL OR JSON_CONTAINS(da.role_access, JSON_QUOTE(?)))
+    )`;
+    const accessArgs = [staff.role];
+
+    if (staff.role === "Recruitment Manager") {
+        return { sql: `(${accessSql})`, args: accessArgs };
     }
-
     if (staff.role === "Department Lead" && staff.dept) {
         return {
-            sql: `(${prefix}dept = ? OR ${prefix}assigned_to = ?)`,
-            args: [staff.dept, staff.id]
+            sql: `((${prefix}dept = ? OR ${prefix}assigned_to = ?) AND (${accessSql}))`,
+            args: [staff.dept, staff.id, ...accessArgs]
         };
     }
-
     return {
-        sql: `${prefix}assigned_to = ?`,
-        args: [staff.id]
+        sql: `(${prefix}assigned_to = ? AND (${accessSql}))`,
+        args: [staff.id, ...accessArgs]
     };
 }
 
@@ -1579,11 +1587,14 @@ async function staffRoutes(req, res, url, user) {
             (SELECT COUNT(*) FROM applications a WHERE a.job_id = p.id) AS application_count
             FROM positions p
             LEFT JOIN departments d ON d.id = p.department_id
-            ORDER BY p.created_at DESC`
+            WHERE (? = 'Administrator' OR d.role_access IS NULL OR JSON_CONTAINS(d.role_access, JSON_QUOTE(?)))
+            ORDER BY p.created_at DESC`,
+            [staff.role, staff.role]
         );
 
         const [departments] = await db.query(
-            "SELECT id, name FROM departments ORDER BY name"
+            "SELECT id, name FROM departments WHERE role_access IS NULL OR JSON_CONTAINS(role_access, JSON_QUOTE(?)) OR ? = 'Administrator' ORDER BY name",
+            [staff.role, staff.role]
         );
 
         return sendJson(res, 200, {
@@ -1789,9 +1800,12 @@ async function staffRoutes(req, res, url, user) {
         const name = safeString(data.name, 50);
         if (name.length < 2) return sendError(res, 400, "Department name is too short.");
 
+        const roleAccess = Array.isArray(data.roleAccess)
+            ? ROLES.filter(role => role === "Administrator" || data.roleAccess.includes(role))
+            : ROLES;
         const [result] = await db.query(
-            "INSERT INTO departments (name, description, created_at) VALUES (?, ?, UTC_TIMESTAMP())",
-            [name, safeString(data.description, 300)]
+            "INSERT INTO departments (name, description, role_access, created_at) VALUES (?, ?, ?, UTC_TIMESTAMP())",
+            [name, safeString(data.description, 300), JSON.stringify(roleAccess)]
         );
 
         if (data.leadId) {
