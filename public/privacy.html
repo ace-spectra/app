@@ -61,24 +61,30 @@ footer{text-align:center;color:var(--muted);padding:22px;font-size:14px}
 <li><strong>Roblox:</strong> the username lookup and avatar retrieval requests are made to Roblox services.</li>
 <li><strong>Hosting and database providers:</strong> they process or host the website and database as part of providing infrastructure.</li>
 </ul>
-<p>We do not control the independent privacy practices or retention of these third-party services.</p>
+<p>We do not control the independent privacy practices or retention of these third-party services. Each provider may process information under its own terms, privacy notice and legal obligations. We only intend to disclose information to providers where reasonably necessary to operate, secure or support Lumo.</p>
 
-<h2>5. Discord notifications</h2>
+<h2>5. Cloudflare and network routing</h2>
+<p>Lumo uses Cloudflare services, including Cloudflare Tunnel, to route public website traffic to the server hosting the application. When you visit the website, your connection is made to Cloudflare's network first. Cloudflare then forwards permitted requests to our origin service through the configured tunnel.</p>
+<p>Cloudflare Tunnel works by having a connector (cloudflared) running in the origin environment initiate and maintain outbound connections to Cloudflare. Responses and requests travel over those established connections. This means the origin does not need a publicly reachable IP address or an inbound port opened specifically for the tunnel. It does <strong>not</strong> mean the public website has no inbound visitor traffic: visitors can still reach the public hostname through Cloudflare, and Cloudflare forwards eligible requests over the tunnel. This description applies to the tunnel path and does not guarantee that every other service, port or hosting component is closed or inaccessible.</p>
+<p>Cloudflare may process connection and request information, such as IP addresses, timestamps, hostnames, request headers and security-related telemetry, to provide routing, security, abuse prevention and reliability services. Cloudflare's own privacy terms govern its processing. We do not control Cloudflare's independent systems, logs or retention periods. For details, review <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's Privacy Policy</a> and <a href="https://developers.cloudflare.com/tunnel/">Cloudflare Tunnel documentation</a>.</p>
+
+<h2>6. Discord notifications</h2>
 <p>If application notifications are enabled, Lumo may send a Discord direct message containing an application update, such as the position, department, application reference and status. The message is delivered through Discord. Once delivered, Lumo cannot remove it from Discord’s systems or from a recipient’s message history. Discord’s own policies apply to that message.</p>
 
-<h2>6. Storage and security</h2>
+<h2>7. Storage and security</h2>
 <p>Application and staff records are stored in a MySQL database. Sensitive application and account fields are encrypted by the application before being stored, and Discord identifiers used for database matching are represented using keyed hashes rather than being stored as plain identifiers in those indexed fields. These measures reduce exposure but cannot guarantee absolute security.</p>
 <p>Signed-in sessions are held in server memory rather than persisted as database session records. The website uses HttpOnly and SameSite session cookies, and marks cookies Secure when operating over HTTPS. Authentication and API responses are configured not to be cached by browsers or intermediaries.</p>
-<p>No internet service can be guaranteed completely secure. You should avoid including unnecessary sensitive information in application answers.</p>
+<p>No internet service can be guaranteed completely secure, continuously available or free from errors, attacks or interruptions. Encryption, access controls and Cloudflare's network protections reduce certain risks but do not eliminate them or guarantee that unauthorised access, loss or disclosure will never occur. We cannot guarantee uninterrupted operation, delivery of notifications, or recovery of data. You should avoid including unnecessary sensitive or confidential information in application answers.</p>
 
-<h2>7. How long we keep information</h2>
+<h2>8. How long we keep information</h2>
 <p>Lumo does not currently implement an automatic retention period or automatic expiry process for application records. Records may remain in the active Lumo database until they are deleted through the service or removed by an administrator as part of service operation.</p>
-<p>We do not operate a separate application-level backup system. This statement does not make any guarantee about independent logs, backups, retention or recovery systems that may be operated by hosting, database or other infrastructure providers.</p>
+<p><strong>We do not create or maintain our own backups of the Lumo application database or application records.</strong> We do not promise that deleted data can be restored, or that data will be recoverable after accidental deletion, corruption, hardware failure, service interruption or another incident. You should not rely on Lumo as the only copy of information you need to keep.</p>
+<p>This describes our own backup practices only. It does not mean that infrastructure providers never create backups, snapshots, logs or other copies. Hosting, database, Cloudflare, Discord, Roblox or other providers may independently retain information under their own systems, terms and retention schedules. We do not control those independent copies and cannot promise their immediate deletion or recovery. We have not verified or made any guarantee about whether a provider maintains such copies.</p>
 
-<h2>8. Accessing and exporting your data</h2>
+<h2>9. Accessing and exporting your data</h2>
 <p>When signed in, you can use the account data export feature, where available, to download a JSON copy of information associated with your account. The export includes your Discord account details, your applications and answers, application history available for those applications, and your Lumo notifications.</p>
 
-<h2>9. Deleting your data</h2>
+<h2>10. Deleting your data</h2>
 <p>You can use the account deletion control in Lumo, where available, to request deletion of your Lumo account data. The deletion operation is designed to remove:</p>
 <ul>
 <li>your applications and their associated application events/history;</li>
@@ -91,23 +97,25 @@ footer{text-align:center;color:var(--muted);padding:22px;font-size:14px}
 <p>The deletion is performed against Lumo’s active database in a database transaction. Once completed, you are signed out. Lumo cannot delete messages already delivered by Discord, data held by Discord or Roblox, or independent infrastructure-provider logs or copies. Older historical events that do not contain an author identifier may not be reliably attributable to a particular staff member and therefore may not be identifiable for individual deletion.</p>
 <p>Some shared recruitment configuration, such as positions or departments, is not recorded as being created by a particular user. Lumo therefore cannot reliably identify and remove shared configuration based solely on who originally created it. Deleting your account does not automatically remove shared positions or departments.</p>
 
-<h2>10. Cookies and similar technologies</h2>
+<h2>11. Cookies and similar technologies</h2>
 <p>Lumo uses essential cookies for authentication and security. The <code>lumo_session</code> cookie identifies your signed-in session. The temporary <code>lumo_state</code> cookie helps validate the Discord OAuth sign-in response and expires shortly after use. These are not used by Lumo for advertising or cross-site behavioural tracking.</p>
 
-<h2>11. Children and eligibility</h2>
-<p>Lumo is a recruitment service. You should only use it if you are permitted to do so under the applicable rules of the service and the laws that apply to you. If you believe a child has provided personal information inappropriately, contact the service operator using the contact details provided by the organisation operating Lumo.</p>
+<h2>12. Children and age restrictions</h2>
+<p>Lumo is intended for people aged 13 or older. It is not directed at children under 13, and we do not knowingly or intentionally request or collect personal information from anyone under 13. Users must not create an account, submit an application or otherwise provide personal information through Lumo if they are under 13.</p>
+<p>We do not knowingly permit under-13s to use the recruitment service. However, we cannot independently verify every user's age, and we cannot guarantee that an under-13 user will never access the public website or submit information. If we become aware that a person under 13 has provided personal information, we will take reasonable steps to investigate and delete that information from systems under our control, subject to any information we are legally required to retain. Please contact the operator through the official support channel if you believe this has happened.</p>
+<p>Users aged 13 or over must still meet any higher minimum age or other eligibility requirements imposed by Discord, Roblox, applicable law or the relevant recruitment process. The age limit in this policy does not override those requirements.</p>
 
-<h2>12. Your choices and rights</h2>
+<h2>13. Your choices and rights</h2>
 <p>Depending on where you live, you may have legal rights to request access to, correction of, deletion of, or restriction of processing of your personal information, or to object to certain processing. You can use Lumo’s account export and deletion controls where available. For requests that cannot be completed through those controls, contact the organisation operating Lumo.</p>
 
-<h2>13. Third-party services and links</h2>
+<h2>14. Third-party services and links</h2>
 <p>Lumo integrates with Discord and Roblox and may link to other websites. Those services are operated independently and have their own privacy notices and terms. Please review their policies when using those services.</p>
 
-<h2>14. Changes to this policy</h2>
+<h2>15. Changes to this policy</h2>
 <p>We may update this policy when Lumo’s features or data practices change. The “Last updated” date at the top indicates when this page was most recently revised. Continued use of Lumo after an update means you have had the opportunity to review the revised policy; where applicable law requires a different approach, we will follow that requirement.</p>
 
-<h2>15. Contact</h2>
-<p>For privacy questions or requests, contact the organisation or team that operates Lumo Careers through its official support channel. The operator’s name and contact details should be provided here by the organisation before this policy is treated as a complete legal contact notice.</p>
+<h2>16. Contact</h2>
+<p>For privacy questions, age-related concerns or requests to exercise your rights, contact the organisation or team that operates Lumo Careers through its official support channel. The operator is responsible for responding to requests concerning the Lumo service, subject to applicable law. The operator's legal name, postal address and privacy contact email should be inserted here before publication. If you are in the UK, you may also have the right to complain to the Information Commissioner's Office (ICO): <a href="https://ico.org.uk/make-a-complaint/">ico.org.uk/make-a-complaint</a>.</p>
 </article>
 </main>
 <footer>© Lumo Careers</footer>
